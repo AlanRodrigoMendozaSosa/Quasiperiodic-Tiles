@@ -1,11 +1,12 @@
-#Misma función que "Centroides_a_Vertices" sólo que esta está pensada para que, en caso de que no encuentre en un
-#diccionario al centroide en cuestión, el código no se rompa, si no que sólo ignore ese paso y continúe; eventualmente
-#el centroide de interés estará en alguno de los cuatro diccionarios a revisar.
-function Centroides_a_Vertices_2(Vecinos_Centroides, Diccionario_Centroides)
+#Misma función que "Centroides_a_Vertices" sólo que esta está pensada para que, en caso de que no encuentre en un diccionario al centroide en cuestión, el código no
+#se rompa, si no que sólo ignore ese paso y continúe; eventualmente el centroide de interés estará en alguno de los cuatro diccionarios a revisar.
+#"Centroides" es un arreglo con los centroides de interés.
+#"Diccionario_Centroides" es un diccionario que relaciona los centroides con los vértices del polígono que lo generó.
+function Centroides_a_Vertices_2(Centroides, Diccionario_Centroides)
     Coordenadas_X = [];
     Coordenadas_Y = [];
 
-    for i in Vecinos_Centroides
+    for i in Centroides
         try
             push!(Coordenadas_X, Diccionario_Centroides[i][1])
             push!(Coordenadas_Y, Diccionario_Centroides[i][2])
@@ -19,10 +20,8 @@ end
 
 #Función para generar un parche cuadrado con vértices de los polígonos
 #"Informacion_Parche" es el arreglo con todos los datos generados para conocer el radio de los parches circulares
-#"Semilado" es el semilado del cuadrado centrado en el origen donde, en caso de no tener un punto dado, el programa
-#generará uno aleatoriamente.
-#"Factor_Reduccion" es el factor por el que se multiplica el radio promedio de los parches circulares, se toma gene-
-#ralmente como 0.8 y ha mostrado buenos resultados.
+#"Semilado" es el semilado del cuadrado centrado en el origen donde, en caso de no tener un punto dado, el programa generará uno aleatoriamente.
+#"Factor_Reduccion" es el factor por el que se multiplica el radio promedio de los parches circulares, se toma generalmente como 0.8 y ha mostrado buenos resultados.
 #"Punto" es el parámetro que en caso de ser cierto, implica que queremos que el programa nos genere un punto aleatorio
 function parche_Cuadrado(Informacion_Parche, Semilado, Factor_Reduccion, Punto = true)
     #Si el usuario no proporciona un punto, generamos uno

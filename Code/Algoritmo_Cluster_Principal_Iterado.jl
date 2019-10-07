@@ -1,6 +1,7 @@
-#Función que itera sobre todos los centroides de los polígonos del arreglo cuasiperiódico. Si el centroide, al pasar a
-#polígonos de Voronoi tiene asociado un polígono con área menor a una "Cota_Area", entonces guardamos dicho centroides
-#caso contrario lo eliminamos.
+#Función que itera sobre todos los centroides de los polígonos del arreglo cuasiperiódico. Si el centroide, al pasar a polígonos de Voronoi tiene asociado un 
+#polígono con área menor a una "Cota_Area", entonces guardamos dicho centroides caso contrario lo eliminamos.
+#"Voronoi" es la estructura generada por Enrique con getVoronoiDiagram()-
+#"Cota_Area" es el área que servirá como discriminante de los polígonos de Voronoi del clúster principal de los que no están ahí.
 function centroides_Area_Acotada(Voronoi, Cota_Area)
     Arreglo_Centroides = []; #Arreglo donde irán los centroides cuya área cae debajo de la cota dada.
     
@@ -46,6 +47,10 @@ function centroides_Area_Acotada(Voronoi, Cota_Area)
     return Arreglo_Centroides
 end
 
+#Función que itera varias veces el algoritmo de centroides_Area_Acotada(). Esto sirve para ir quitando varias capas usando como discriminante el área.
+#"Centroides" es un arreglo con los centroides de los polígonos del arreglo cuasiperiódico de interés.
+#"Cota_Area" es el área que servirá como discriminante de los polígonos de Voronoi del clúster principal de los que no están ahí.
+#"Num_Iteraciones" es un número entero asociado al número de veces que queremos implementar el algoritmo.
 function centroides_Area_Acotada_Iterada(Centroides, Cota_Area, Num_Iteraciones)
     
     for i in 1:Num_Iteraciones
