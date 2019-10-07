@@ -65,10 +65,10 @@ function interseccion(S1::segmento,S2::segmento)
 end
 
 #La función regresa "true" si el punto está dentro del polígono y "false" si no.
-#Poligono es un arreglo con los segmentos que conforman al polígono en cuestión.
-#Punto es el punto que queremos checar si está dentro o fuera.
+#"Poligono" es un arreglo con los segmentos que conforman al polígono en cuestión.
+#"Punto" es el punto que queremos checar si está dentro o fuera. Es un arreglo con dos entradas.
 function dentro(Poligono, Punto)
-    #Generamos una recta con dirección "arbitraria". Recomiendo pasar a una distribución circular
+    #Generamos una recta con dirección "arbitraria".
     Recta = segmento(Punto, [100*cos(rand(0:1e-6:2*pi)),100*sin(rand(0:1e-6:2*pi))]);
     
     Contenedor = [];
@@ -89,6 +89,8 @@ function dentro(Poligono, Punto)
 end
 
 #Función que regresa los segmentos que conforman cada uno de los polígonos del arreglo cuasiperiódico.
+#"Coordenadas_X" es un arreglo con las coordenadas en X de los vértices de los polígonos. Cada 4 entradas corresponden a un mismo polígono.
+#"Coordenadas_Y" es un arreglo con las coordenadas en Y de los vértices de los polígonos. Cada 4 entradas corresponden a un mismo polígono.
 function obtener_Segmentos_Vertices(Coordenadas_X, Coordenadas_Y)
     #Arreglo donde irán los segmentos asociados a cada polígono
     Poligonos = [];
@@ -108,6 +110,9 @@ function obtener_Segmentos_Vertices(Coordenadas_X, Coordenadas_Y)
 end
 
 #Funciones que itera sobre los distintos polígonos hasta encontrar el que contiene al punto "Punto".
+#"Punto" es el punto que queremos checar si está dentro o fuera. Es un arreglo con dos entradas.
+#"Poligonos" es un arreglo de arreglos, cada uno con los segmentos que conforman al polígono en cuestión.
+#"Informacion_Duales" es un arreglo con la información de cómo se generó cada polígono.
 function encontrar_Poligono(Punto, Poligonos, Informacion_Duales)
     #Iteremos sobre los posibles polígonos para encontrar el que contenga al punto
     for i in 1:length(Poligonos)

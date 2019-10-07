@@ -1,4 +1,6 @@
 #Función que nos regresa el centroide de un conjunto de rombos (paralelepípedo de cuatro vértices) dados sus vértices
+#"Coordenadas_X" es un arreglo con las coordenadas en X de los vértices de los polígonos. Cada 4 entradas corresponden a un mismo polígono.
+#"Coordenadas_Y" es un arreglo con las coordenadas en Y de los vértices de los polígonos. Cada 4 entradas corresponden a un mismo polígono.
 function centroides(Coordenadas_X, Coordenadas_Y)
     #Generamos los arreglos que contendrán las coordenadas de los centroides
     Centroide_X = [];
@@ -23,8 +25,9 @@ function centroides(Coordenadas_X, Coordenadas_Y)
     return Centroide_X, Centroide_Y, Centroides, Diccionario_Centroides
 end
 
-#Definimos una función que, dado el índice asociado a un polígono de Voronoi dentro de todos los generados, nos regresa
-#el índice de todos los polígonos vecinos.
+#Definimos una función que, dado el índice asociado a un polígono de Voronoi dentro de todos los generados, nos regresa el índice de todos los polígonos vecinos.
+#"Indice" es el índice del polígono de Voronoi en el que estamos interesados.
+#"Voronoi" es la estructura generada por Enrique con la función getVoronoiDiagram().
 function vecinos_Voronoi(Indice, Voronoi)
     #Definimos un arreglo donde iremos guardando los centroides de los polígonos vecinos
     Vecinos_Centroides = [];
@@ -77,6 +80,9 @@ function vecinos_Voronoi(Indice, Voronoi)
     return Vecinos_Centroides
 end
 
+#Función que localiza el índice del polígono de Voronoi asociado a algún centroide dado. Lo realiza por fuerza bruta.
+#"Dupla_Centroide" es una dupla con las coordenadas del Centroide de interés
+#"Voronoi" es la estructura generada por Enrique con la función getVoronoiDiagram().
 function indice_Voronoi_Centroide(Dupla_Centroide, Voronoi)
     #Comencemos tomando el primero de los posibles polígonos de Voronoi
     i = 1;
@@ -90,11 +96,14 @@ function indice_Voronoi_Centroide(Dupla_Centroide, Voronoi)
     return i
 end
 
-function Centroides_a_Vertices(Vecinos_Centroides, Diccionario_Centroides)
+#Función que nos regresa, dado un conjunto de centroides, los vértices de los polígonos que los generan. Emplea un diccionario para ello.
+#"Centroides" es un arreglo con las duplas de los centroides de interés
+#"Diccionario_Centroides" es un diccionario que relaciona los centroides con los vértices del polígono que los genera.
+function Centroides_a_Vertices(Centroides, Diccionario_Centroides)
     Coordenadas_X = [];
     Coordenadas_Y = [];
 
-    for i in Vecinos_Centroides
+    for i in Centroides
         push!(Coordenadas_X, Diccionario_Centroides[i][1])
         push!(Coordenadas_Y, Diccionario_Centroides[i][2])
     end
@@ -102,7 +111,9 @@ function Centroides_a_Vertices(Vecinos_Centroides, Diccionario_Centroides)
     return collect(Iterators.flatten(Coordenadas_X)), collect(Iterators.flatten(Coordenadas_Y))
 end
 
-#Funciones que itera sobre los distintos polígonos hasta encontrar el que contiene al punto "Punto".
+#Función que itera sobre los distintos polígonos hasta encontrar el que contiene al punto "Punto".
+#"Punto" es el punto que queremos checar si está dentro o fuera. Es un arreglo con dos entradas.
+#"Poligonos" es un arreglo de arreglos, cada uno con los segmentos que conforman al polígono en cuestión.
 function encontrar_Poligono_Voronoi(Punto, Poligonos)
     #Iteremos sobre los posibles polígonos para encontrar el que contenga al punto
     for i in 1:length(Poligonos)
@@ -116,6 +127,9 @@ function encontrar_Poligono_Voronoi(Punto, Poligonos)
     println("Error: No hay polígono que contenga al punto")
 end
 
+#Función que genera una vecindad del arreglo cuasiperiódico alrededor de un punto dado (o arbitrario dentro de un cuadrado)
+#"N" es el margen de error que vamos a permitir en los posibles números enteros generados por la proyección del punto sobre los vectores estrella.
+#"Cota" es el Semilado de la caja centrada en el origen dentro de la cual se va a calcular el punto arbitrario si el usuario no da uno.
 function region_Local_Voronoi(N, Cota, Punto = true)
     #Si el usuario no proporciona un punto, generamos uno
     if Punto == true
@@ -147,6 +161,10 @@ function region_Local_Voronoi(N, Cota, Punto = true)
     return Coordenadas_X, Coordenadas_Y, Punto
 end
 
+#Función que busca el polígono del arreglo cuasiperiódico que contiene al punto de interés empleando polígonos de Voronoi.
+#"Coordenadas_X" es un arreglo con las coordenadas en X de los vértices de los polígonos. Cada 4 entradas corresponden a un mismo polígono.
+#"Coordenadas_Y" es un arreglo con las coordenadas en Y de los vértices de los polígonos. Cada 4 entradas corresponden a un mismo polígono.
+#"Punto" es un arreglo dos dimensional con las coordenadas de un punto en el espacio 2D.
 function poligono_Contenedor_Voronoi(Coordenadas_X, Coordenadas_Y, Punto)
     #Paso 4: Obtenemos el conjunto de centroides de nuestros futuros polígonos.
     Centroides_X, Centroides_Y, Centroides, Diccionario_Centroides = centroides(Coordenadas_X, Coordenadas_Y);

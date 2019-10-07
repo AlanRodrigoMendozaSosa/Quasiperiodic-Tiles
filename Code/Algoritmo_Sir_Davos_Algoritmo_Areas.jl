@@ -1,4 +1,5 @@
 #Función que regresa las coordenadas de los centroides de aquellos polígonos que no se cierran al pasar a Voronoi.
+#"Voronoi" es la estructura generada por Enrique con la función getVoronoiDiagram().
 function centroides_Sin_Poligono(Voronoi)
     Sitios = []; #Arreglo donde irán las coordenadas de los sitios de los polígonos que no se cierran
     for Face in Voronoi.faces #Iteramos sobre todos los centroides.
@@ -26,7 +27,10 @@ function centroides_Sin_Poligono(Voronoi)
     return Sitios
 end
 
-#Función que regresa los Centroides de los polígonos que quedan tras ir quitando las capas más externas del arreglo Cuasiperiódico (La cebolla)
+#Función que regresa los Centroides de los polígonos que quedan tras ir quitando las capas más externas del arreglo Cuasiperiódico (La cebolla).
+#NOTA: Esta función modifica el arreglo Centroides, por lo que en caso de querer conservarlo es necesario trabajar con una copia.
+#"Centroides" es un arreglo con los centroides de todos los polígonos generados en la vecindad del arreglo cuasiperiódico.
+#"Num_Capas_Cebolla" es un entero que indica cuántas iteraciones del algoritmo centroides_Sin_Poligono() se van a realizar.
 function algoritmo_Sir_Davos!(Centroides, Num_Capas_Cebolla)
     
     for i in 1:Num_Capas_Cebolla
@@ -54,7 +58,8 @@ mutable struct Polygon
     Vertices::Array{Array{Number,1}, 1}
 end
 
-#Función de Ata para calcular áreas de polígonos
+#Función de Ata para calcular áreas de polígonos.
+#"P" es un polígono.
 function area(P::Polygon)
     A = 0; #Variable que eventualmente nos dará el área del polígono
     Vertices = P.Vertices; #Arreglo con los vértices del polígono (presuponiendo que están ordenados)
@@ -71,7 +76,9 @@ function area(P::Polygon)
     end
 end
 
-#Obtengamos un arreglo con las áreas de los polígonos que están bien definidos en Voronoi.
+#Función que calcula las áreas de los polígonos que están bien definidos en Voronoi.
+#"Centroides_Sin_Cerrar" es un arreglo de los centroides que no se cierran en el algoritmo de Voronoi.
+#"Voronoi" es la estructura generada por Enrique con la función getVoronoiDiagram().
 function area_Poligonos_Voronoi_Config_Inicial(Centroides_Sin_Cerrar, Voronoi)
     Areas = []; #arreglo que contendrá las áreas de los polígonos
     
@@ -98,7 +105,9 @@ function area_Poligonos_Voronoi_Config_Inicial(Centroides_Sin_Cerrar, Voronoi)
     return Areas
 end
 
-#Obtengamos un arreglo con las áreas de los polígonos que están bien definidos en Voronoi.
+#Función que calcula las áreas de los polígonos que están en el clúster principal de Voronoi.
+#"Centroides_Refinados" es un arreglo con los centroides tras quitarle un cierto número de capas al arreglo de Voronoi.
+#"Voronoi_Config_Inicial" es la estructura generada por Enrique con la función getVoronoiDiagram() considerando TODOS los centroides.
 function area_Poligonos_Voronoi_Ultima_Capa(Centroides_Refinados, Voronoi_Config_Inicial)
     Areas = []; #arreglo que contendrá las áreas de los polígonos
     
@@ -126,6 +135,10 @@ end
 #Función que nos regresa las áreas de los polígonos de Voronoi tras remover una "Num_Capas_Remover" cantidad de capas externas a dicho arreglo.
 #A priori, conocer el número de capas a remover para quedarnos con el cluster principal es prácticamente imposible (no conozco un método de hacerlo analíticamente)
 #Por ello es que al implementarse este algoritmo, se hacen previamente pruebas con distintos valores para la variable "Num_Capas_Remover".
+#"Iteraciones" es el número de veces que se va a calcular el área de los polígonos de Voronoi tras retirar capas, cada vez para un punto arbitrario distinto.
+#"Num_Capas_Remover" es el número de capas que se van a remover de los polígonos de Voronoi en cada iteración.
+#"Margen_Error" es el número entero que consideramos como posible error a los enteros obtenidos al proyectar el punto arbitrario con los vectores estrella
+#"Semilado_Caja" es el semilado del cuadrado centrado en el origen dentro del cual se obtiene un punto arbitrario alrededor del que se obtendrá el arrego cuasiper
 function arreglo_Areas_Buenos_Poligonos(Iteraciones, Num_Capas_Remover, Margen_Error, Semilado_Caja)
     Arreglo_Buenas_Areas = []; #Arreglo donde meteremos las buenas áreas de los polígonos de Voronoi.
     Contador_Iteraciones = 0;
@@ -152,7 +165,7 @@ function arreglo_Areas_Buenos_Poligonos(Iteraciones, Num_Capas_Remover, Margen_E
         #Obtenemos las área de todos los polígonos de Voronoi (exceptuando únicamente los "polígonos" que no se cierran).
         #Es decir, iteramos sobre todos los centroides, si el centroide corresponde a un polígono que no se cierra en Voronoi
         #lo ignoramos, caso contrario obtenemos el área del polígono.
-        Areas_Config_Inicial = area_Poligonos_Voronoi_Config_Inicial(Sitios_Centroides_Sin_Cerrar, voronoi_inicial);
+        #Areas_Config_Inicial = area_Poligonos_Voronoi_Config_Inicial(Sitios_Centroides_Sin_Cerrar, voronoi_inicial);
         
         #Hacemos una copia del arreglo de Centroides para poder conservar la configuración inicial y poder hacer distintas 
         #pruebas con esa misma configuración.

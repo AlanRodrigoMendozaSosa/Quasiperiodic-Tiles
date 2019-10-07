@@ -1,17 +1,17 @@
 #La función determina, fijando los vectores estrella Ej y Ek, fijando los enteros Nj y Nk, y para algún conjunto
 #de alfas (uno por cada vector estrella), los cuatros puntos de la red dual
+#"J" y "K" son los índices de los vectores estrella a considerar
+#"Nj" y "Nk" son los enteros con los que se generan las rectas ortogonales a Ej y Ek.
+#"Vectores_Estrella" es el conjunto de vectores estrella
+#"Arreglo_Alfas" es el conjunto con las constantes alfas asociadas a cada vector estrella
 function cuatro_Regiones(J, K, Nj, Nk, Vectores_Estrella, Arreglo_Alfas)
-    VecJ = Vectores_Estrella[J];
-    VecK = Vectores_Estrella[K];
-    
-    #No podemos considerar a los mismos vectores
-    if J == K
-        error("Los índices J y K deben ser diferentes")
-    else        
+    if (length(Vectores_Estrella) % 2 == 0) && (K == J + length(Vectores_Estrella)/2) #En este caso los vectores son paralelos
+        error("Los vectores Ej y Ek no pueden ser paralelos")
+    else
         #Definimos los dos vectores con los que se consigue la intersección en la malla generada por los vectores
         #estrella que estamos considerando.
-        Ej = Vectores_Estrella[J]; #Creo que son innecesarios, ya están definidos arriba
-        Ek = Vectores_Estrella[K]; #Creo que son innecesarios, ya están definidos arriba
+        Ej = Vectores_Estrella[J];
+        Ek = Vectores_Estrella[K];
         
         #Obtenemos los vectores ortogonales a estos dos vectores
         EjOrt = vector_Ortogonal(Ej);
@@ -52,6 +52,10 @@ end
 
 #La función determina, fijando los vectores estrella Ej y Ek, y para algún conjunto de alfas (uno por cada vector 
 #estrella), los puntos de la red dual corriendo los valores enteros Nj y Nk desde -N hasta N
+#"J" y "K" son los índices de los vectores estrella a considerar
+#"N" es el número entero que determina el rango [-N, N] en el que se barren los enteros de las rectas ortogonales a los vectores Ej y Ek.
+#"Vectores_Estrella" es el conjunto de vectores estrella
+#"Arreglo_Alfas" es el conjunto con las constantes alfas asociadas a cada vector estrella
 function puntos_Dual_JK(J, K, N, Vectores_Estrella, Arreglo_Alfas)
     #Definimos el arreglo que contendra los vectores asociados a cada punto
     Puntos_Red_Dual = [];
@@ -59,7 +63,7 @@ function puntos_Dual_JK(J, K, N, Vectores_Estrella, Arreglo_Alfas)
     
     for Nj in -N:N
         for Nk in -N:N
-            try #Ponemos el Try-Catch para que no debamos separar los casos en que J == K, el error lo maneja autom.
+            try #Ponemos el Try-Catch para que no debamos separar los casos en que Ej y Ek son paralelos, el error lo maneja autom.
                 t0, t1, t2, t3, info = cuatro_Regiones(J, K, Nj, Nk, Vectores_Estrella, Arreglo_Alfas)
                 push!(Puntos_Red_Dual, t0);
                 push!(Puntos_Red_Dual, t1);
@@ -76,6 +80,9 @@ function puntos_Dual_JK(J, K, N, Vectores_Estrella, Arreglo_Alfas)
 end
 
 #Ahora hay que barrer todas las posibles combinaciones de los vectores Ej y Ek
+#"N" es el número entero que determina el rango [-N, N] en el que se barren los enteros de las rectas ortogonales a los vectores Ej y Ek.
+#"Vectores_Estrella" es el conjunto de vectores estrella
+#"Arreglo_Alfas" es el conjunto con las constantes alfas asociadas a cada vector estrella
 function puntos_Dual(N, Vectores_Estrella, Arreglo_Alfas)
     #Definimos el arreglo que contendrá todos los puntos de la red Dual
     Puntos_Duales = [];
