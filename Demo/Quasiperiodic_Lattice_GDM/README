@@ -1,0 +1,1 @@
+In this example we generate a quasiperiodic lattice using just the Generalized Dual Method. The algorithm used here is a correction of the algorithm exposed by Gerardo García Naumis in his paper entitled "Analytic expressions for the vertex coordinates of quasiperiodic lattices" available at the link: http://www.fisica.unam.mx/personales/naumis/index_archivos/ZKrist_656.pdf
