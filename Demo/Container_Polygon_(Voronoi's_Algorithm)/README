@@ -1,0 +1,5 @@
+In this notebook we show how to use the Voronoi's algorithm programmed by Enrique Gómez Cruz (@couscouscricket) to find the container polygon of a Quasiperiodic Lattice of a arbitrary point in the space.
+
+The version of Voronoi's algorithm used in this notebook correspond to the version available at 19-August-2019 in the Enrique's Github.
+
+Right now there are newer versions of Voronoi's algorithm, we will develope the correspondig updates in a soon date.
