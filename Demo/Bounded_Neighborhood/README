@@ -1,0 +1,8 @@
+In this notebook we implement a slight modification to the algorithm that generate the Neighborhood of the Quasiperiodic Lattice around an arbitrary point in the space.
+
+This modification only consider the polygons within a circle of a given radius around that arbitrary point.
+That makes the final Neihgborhood smaller, making the algorithm to find the container polygon faster.
+
+Consider that, for some applications, we would prefer a bigger neighborhood, so in the final program this function could not be included.
+
+Also, we implement here again the algorithm that find the container polygon.
