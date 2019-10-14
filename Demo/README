@@ -1,3 +1,8 @@
 In this folder we can find some subfolders with notebooks and the files required by them to run.
 
 In these notebooks several examples of what can be done with the programmed algorithms are presented.
+
+Note: The next folders will be updated soon as a new Voronoi algorithm developed by Enrique was released.
+
+1.- Container_Polygon_(Voronoi's_Algorithm)
+2.- Efficiency_Test_for_Three_Containers_Polygon's_Algorithm
