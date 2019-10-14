@@ -139,15 +139,15 @@ end
 #"Num_Capas_Remover" es el número de capas que se van a remover de los polígonos de Voronoi en cada iteración.
 #"Margen_Error" es el número entero que consideramos como posible error a los enteros obtenidos al proyectar el punto arbitrario con los vectores estrella
 #"Semilado_Caja" es el semilado del cuadrado centrado en el origen dentro del cual se obtiene un punto arbitrario alrededor del que se obtendrá el arrego cuasiper
-function arreglo_Areas_Buenos_Poligonos(Iteraciones, Num_Capas_Remover, Margen_Error, Semilado_Caja)
+function arreglo_Areas_Buenos_Poligonos(Iteraciones, Num_Capas_Remover, Margen_Error, Semilado_Caja, Promedios_Distancia, Vectores_Estrella, Arreglo_Alfas)
     Arreglo_Buenas_Areas = []; #Arreglo donde meteremos las buenas áreas de los polígonos de Voronoi.
     Contador_Iteraciones = 0;
     
     for i in 1:Iteraciones
-    
+
         #Generación del arreglo cuasiperiódico con margen de error (1era entrada) y semilado del cuadrado donde colocar un 
         #pto arbitrario.
-        Coordenadas_X, Coordenadas_Y, Punto = region_Local_Voronoi(Margen_Error, Semilado_Caja);
+        Coordenadas_X, Coordenadas_Y, Punto = region_Local_Voronoi(Margen_Error, Semilado_Caja, Promedios_Distancia, Vectores_Estrella, Arreglo_Alfas);
 
         #Obtención de los centroides de los poligonos del arreglo cuasiperiódico en: 
         #coordenada X, coordenada Y, Float64(X,Y) y su diccionario Centroides <-> Vertices.
