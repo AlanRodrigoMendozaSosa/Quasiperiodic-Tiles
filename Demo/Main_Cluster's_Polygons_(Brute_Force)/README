@@ -1,0 +1,5 @@
+In this notebook we show how to obtain by Brute Force the Main Cluster of polygons in a neighborhood of a Quasiperiodic Lattice generated around an arbitrary point.
+
+This method was useful because it let us to know an statistical distribution of the areas of the polygons in the main cluster.
+
+That information let us generate a more intelligent algorithm to obtain the main cluster of a set of polygons.
