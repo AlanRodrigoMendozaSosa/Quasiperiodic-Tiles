@@ -1,0 +1,3 @@
+In this notebook we show how to obtain an average radius for the main cluster of one neighborhood of the quasiperiodic lattice around an arbitrary point.
+
+This average radius depends of the characteristics of the generated neighborhoods, so it must be calculated every time the parameters of the neighborhoods with which it will work are modified.
