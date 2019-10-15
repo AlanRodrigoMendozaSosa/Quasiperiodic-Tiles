@@ -1,0 +1,5 @@
+In this notebook we show how to get the distribution of the number of edges of the Voronoi's polygons associated with the centroids of the Quasiperiodic Lattice's polygons.
+
+To do that, we generate various neighborhoods of the quasiperiodic lattice around arbitrary points and we get the number of edges of the Voronoi's polygons associated with the centroids of the polygons in the main clusters of the neighborhoods.
+
+Finally, with that information, we show an histogram of it.
