@@ -2,7 +2,7 @@ In this folder we can find some subfolders with notebooks and the files required
 
 In these notebooks several examples of what can be done with the programmed algorithms are presented.
 
-An recommended order of lecture (based in how the code was developed) is:
+A recommended order of lecture (based in how the code was developed) is:
 1.- Quasiperiodic_Lattice_GDM
 2.- Quasiperiodic_Stripe
 3.- Quasiperiodic_Neighborhood_Arbitrary_Point
