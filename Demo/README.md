@@ -1,8 +1,8 @@
-In this folder we can find some subfolders with notebooks and the files required by them to run.
+In this folder we can find some subfolders with notebooks and the files required by them to run. In those notebooks several examples of what can be done with the programmed algorithms are presented.
 
-In these notebooks several examples of what can be done with the programmed algorithms are presented.
-
+### Order of lecture.
 A recommended order of lecture (based in how the code was developed) is:
+
 1.- Quasiperiodic_Lattice_GDM
 
 2.- Quasiperiodic_Stripe
