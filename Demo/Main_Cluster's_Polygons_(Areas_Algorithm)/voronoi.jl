@@ -5,7 +5,7 @@ include("events.jl")
 
 const Point = NTuple{2, Float64}
 
-# Parabola with focal point f, and directrix ly evaluated at x
+# Parabola with focal point f, and directrix ly evaluated at x.
 function parabola(x::Float64, ly::Float64, f::Point)
     fx = f[1]; fy = f[2]
     a = fx - x
@@ -14,28 +14,33 @@ function parabola(x::Float64, ly::Float64, f::Point)
     return (b + a * a / c) / 2
 end
 
-# fa and fb are focal points, ly is the directrix.
+# fa and fb are focal points.
+# ly is the directrix (given by the sweepline's position).
 function intersectParabolas(fa::Point, fb::Point, ly::Float64)
     fax = fa[1]; fay = fa[2]
     fbx = fb[1]; fby = fb[2]
 
-    if fay == fby; return fax < fbx ? (fax + fbx) / 2 : Inf; end
+    epsilon = 1e-10 # takes care of numerical zeros.
+    if abs(fay - fby) < epsilon; return fax < fbx ? (fax + fbx) / 2 : Inf; end
+
     # intersection of two parabolas
     a = fay - ly
     b = fby - ly
     c = fax - fbx
     d = fay - fby
     s1 = a*fbx - b*fax
-    s2 = sqrt(abs((c*c + d*d)*a*b))
+    s2 = sqrt((c*c + d*d)*a*b)
 
     # There are two solutions: x1 = (s1-s2)/d and x2 = (s1+s2)/d.
     # Also, x1 < x2 iff d > 0.
-    # So x1 will throw the point to the left or to the right of the
+    # So x1 gives the point to the left or to the right of the
     # lowest parabola, which is exactly what we want.
     return (s1 - s2) / d
 end
 
-# a, b and c define a circumcircle. It's center is a Voronoi vertex.
+# a, b and c define a circumcircle.
+# Its center is a Voronoi vertex.
+# Its bottom point marks the event when a parabola disappears.
 function getCircleBottomPoint(a::Point, b::Point, c::Point)
     ax = a[1]; ay = a[2]
     bx = b[1]; by = b[2]
@@ -51,6 +56,7 @@ function getCircleBottomPoint(a::Point, b::Point, c::Point)
     # Circumcenter
     x = (ax + bx - s*uy)/2
     y = (ay + by + s*ux)/2
+
     # Radius
     rx = ax - x
     ry = ay - y
@@ -58,9 +64,8 @@ function getCircleBottomPoint(a::Point, b::Point, c::Point)
     return (x, y-r)
 end
 
-# ccw checks if the orientation of the ordered triplet (a,b,c)
-# is counter-clockwise.
-# Collinearity is when v×w = 0, so numerical errors should be considered.
+# Checks if ordered tuple is colinear or oriented counter-clockwise.
+# In this cases their bisectors do not converge.
 function ccw(a::Point, b::Point, c::Point)
     ax = a[1]; ay = a[2]
     bx = b[1]; by = b[2]
@@ -71,7 +76,8 @@ function ccw(a::Point, b::Point, c::Point)
     acy = cy - ay
 
     crossProduct = abx * acy - aby * acx
-    return crossProduct > -1e-15
+    epsilon = 1e-10 # takes care of numerical zero.
+    return crossProduct > -epsilon
 end
 
 # Search for the arc directly on top of current site.
@@ -79,7 +85,10 @@ function getSplittingArc(beachline::Beachline, site::Point)
     currentNode = beachline.root
     while isa(currentNode, Breakpoint)
         parabolas = currentNode.parabolas
-        x = intersectParabolas(parabolas[1], parabolas[2], site[2])
+        fa = parabolas[1] # left parabola's focal point.
+        fb = parabolas[2] # right parabola's focal point.
+        ly = site[2]      # directrix defined by sweepline's current position.
+        x = intersectParabolas(fa, fb, ly)
         currentNode = site[1] < x ? currentNode.left : currentNode.right
     end
     return currentNode
@@ -261,8 +270,8 @@ function handleCircleEvent!(events::Vector{AbstractVoronoiEvent},
 
     innerMost.halfedge = mhe
 
-    # Push disappearing halfedges
-    push!(diagram.halfedges, lhe, rhe)
+    # Push finished halfedges
+    push!(diagram.halfedges, lhe, rhe, mhe.twin)
     push!(diagram.vertices, vv)
 
     # Check for potential circle events.
@@ -278,53 +287,7 @@ function handleCircleEvent!(events::Vector{AbstractVoronoiEvent},
     end
 end
 
-function intersectWithBoundingBox!(halfedge::Halfedge, s::Point, boundingBox::Vector{Halfedge})
-    # Haldedge's origin.
-    q = halfedge.origin.coordinates
-    #
-    # Intersect halfedge with bounding box.
-    intersections = []
-    for x0 in boundingBox
-        p = x0.origin.coordinates
-        r = x0.next.origin.coordinates .- p
-
-        # Check if halfedge enters or exits bounding box.
-        # if dot(s, r') > 0 then halfedge exits, where r' = (ry, -rx).
-        sdotrp = s[1]*r[2] - s[2]*r[1]
-        if sdotrp <= 0; continue; end
-        #
-        # Intersection occurs at t = ((q - p) x s) / (r x s)
-        a = (q .- p)
-        axs = a[1]*s[2] - a[2]*s[1]
-        axr = a[1]*r[2] - a[2]*r[1]
-        rxs = r[1]*s[2] - r[2]*s[1]
-        t = axs / rxs
-        u = axr / rxs
-        if rxs != 0 && 0 < t <= 1 && u >= 0
-            x = Halfedge()
-            x.origin = Vertex(p .+ t .* r)
-
-            x.next = x0.next
-            x0.next.prev = x
-
-            twin = halfedge.twin
-
-            twin.origin = x.origin
-
-            x.prev = halfedge
-            halfedge.next = x
-
-            x0.next = twin
-            twin.prev = x0
-            push!(intersections, x)
-        end
-    end
-    for x in intersections
-        push!(boundingBox, x)
-    end
-end
-
-function clipHalfedges!(beachline::Beachline, diagram::PolygonalMesh, boundingBox::Vector{Halfedge})
+function finishHalfedges!(beachline::Beachline, diagram::PolygonalMesh)
     node = beachline.root
     if isa(node, Arc); return; end
     breakpts::Vector{Breakpoint} = [node]
@@ -335,7 +298,8 @@ function clipHalfedges!(beachline::Beachline, diagram::PolygonalMesh, boundingBo
 
         halfedge = breakpoint.halfedge
         #
-        # Halfedge's direction (clockwise rotation), s.
+        # Halfedge's direction is the clockwise rotation
+        # of the vector pointing from lsite to rsite.
         parabolas = breakpoint.parabolas
         lsite = parabolas[1]
         rsite = parabolas[2]
@@ -343,7 +307,13 @@ function clipHalfedges!(beachline::Beachline, diagram::PolygonalMesh, boundingBo
         ny = rsite[2] - lsite[2]
         s = (ny, -nx)
 
-        intersectWithBoundingBox!(halfedge, s, boundingBox)
+        # Finish infinite halfedges.
+        v = Vertex(halfedge.origin.coordinates .+ s)
+        v.incidentHalfedge = halfedge.twin
+        halfedge.twin.origin = v
+
+        # Push finished halfedges
+        push!(diagram.halfedges, halfedge)
 
         lchild = breakpoint.left
         rchild = breakpoint.right
@@ -354,37 +324,64 @@ function clipHalfedges!(beachline::Beachline, diagram::PolygonalMesh, boundingBo
             push!(breakpts, rchild)
         end
     end
+end
 
+function finishFaces!(diagram::PolygonalMesh)
+    # The top-most site does not have a face with an outer component defined.
+    # The second face is, by construction, a neighbor of the first face.
+    diagram.faces[1].outerComponent = diagram.faces[2].outerComponent.twin
+    diagram.faces[1].outerComponent.incidentFace = diagram.faces[1]
 
-    for halfedge in diagram.halfedges
-        # intersect halfedge with bounding box.
-        p = halfedge.twin.origin.coordinates
-        twin = halfedge.twin
-        # TODO: generalize this:
-        #if !(0.0 < p[1] < 1.0 && 0.0 < p[2] < 1.0)
-        if halfedge.origin != nothing
-            #
-            # Halfedge's direction (clockwise rotation), s.
-            s = twin.origin.coordinates .- halfedge.origin.coordinates
-            intersectWithBoundingBox!(halfedge, s, boundingBox)
+    for face in diagram.faces
+        halfedge = face.outerComponent
+        while true
+            # Finish linking face and its halfedge.
+            halfedge.incidentFace = face
+
+            # If next halfedge is null then this face
+            # is an open one (its area should be infinite).
+            if halfedge.next === nothing
+                face.area = Inf
+                # Let's look for the other open end by going backwards.
+                prev = face.outerComponent
+                while prev.prev !== nothing
+                    prev.incidentFace = face
+                    prev = prev.prev
+                end
+                prev.incidentFace = face
+
+                # Link both open ends
+                halfedge.next = prev
+                prev.prev = halfedge
+                break
+            end
+
+            # Calculate area of current face.
+            p0 = halfedge.origin.coordinates
+            p1 = halfedge.twin.origin.coordinates
+            face.area += p0[1]*p1[2] - p0[2]*p1[1]
+
+            halfedge = halfedge.next
+            if halfedge === face.outerComponent
+                break
+            end
         end
+        face.area = abs(face.area / 2)
     end
 end
 
-
-function boundingBox(pts::Vector{Point})
-    n::Int = length(pts)
-    bbox::Vector{Halfedge} = [Halfedge() for i in 1:n]
-    for i in 1:n
-        halfedge = bbox[i]
-        halfedge.origin = Vertex(pts[i])
-        halfedge.next = bbox[mod(i, n)+ 1]
-        halfedge.prev = bbox[mod(n-1 + i-1, n) + 1]
-        # TODO: add twin information
-    end
-    return bbox
-end
-
+#function boundingBox(pts::Vector{Point})
+#    n::Int = length(pts)
+#    bbox::Vector{Halfedge} = [Halfedge() for i in 1:n]
+#    for i in 1:n
+#        halfedge = bbox[i]
+#        halfedge.origin = Vertex(pts[i])
+#        halfedge.next = bbox[mod(i, n)+ 1]
+#        halfedge.prev = bbox[mod(n-1 + i-1, n) + 1]
+#        # TODO: add twin information
+#    end
+#    return bbox
+#end
 
 function getVoronoiDiagram(sites::Vector{Point})
     # Initialize event queue with all site events.
@@ -412,11 +409,12 @@ function getVoronoiDiagram(sites::Vector{Point})
         end
     end
 
-    diagram.faces[1].outerComponent = diagram.faces[2].outerComponent.twin
-    diagram.faces[1].outerComponent.incidentFace = diagram.faces[1]
-
     # Make edges fit inside bounding box.
     #bbox = boundingBox([(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)])
-    #clipHalfedges!(beachline, diagram, bbox)
+
+    finishHalfedges!(beachline, diagram)
+
+    finishFaces!(diagram)
+
     return diagram
 end
