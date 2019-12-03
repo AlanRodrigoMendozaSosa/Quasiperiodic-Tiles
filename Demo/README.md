@@ -32,6 +32,4 @@ A recommended order of lecture (based in how the code was developed) is:
 
 **Note: The next folders will be updated soon as a new Voronoi algorithm developed by Enrique was released.**
 
-7.- Main_Cluster_Size
-
 8.- Square_Main_Cluster
