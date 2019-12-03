@@ -69,7 +69,7 @@ end
 #"Punto" es el punto que queremos checar si está dentro o fuera. Es un arreglo con dos entradas.
 function dentro(Poligono, Punto)
     #Generamos una recta con dirección "arbitraria".
-    Recta = segmento(Punto, [100*cos(rand(0:1e-6:2*pi)),100*sin(rand(0:1e-6:2*pi))]);
+    Recta = segmento(Punto, [1e6*cos(rand(0:1e-6:2*pi)),1e6*sin(rand(0:1e-6:2*pi))]);
     
     Contenedor = [];
     
@@ -96,14 +96,12 @@ function obtener_Segmentos_Vertices(Coordenadas_X, Coordenadas_Y)
     Poligonos = [];
         
     for i in 1:4:length(Coordenadas_X)
-        
         Segmento1 = segmento([Coordenadas_X[i], Coordenadas_Y[i]], [Coordenadas_X[i+1], Coordenadas_Y[i+1]]);
         Segmento2 = segmento([Coordenadas_X[i+1], Coordenadas_Y[i+1]], [Coordenadas_X[i+2], Coordenadas_Y[i+2]]);
         Segmento3 = segmento([Coordenadas_X[i+2], Coordenadas_Y[i+2]], [Coordenadas_X[i+3], Coordenadas_Y[i+3]]);
         Segmento4 = segmento([Coordenadas_X[i+3], Coordenadas_Y[i+3]], [Coordenadas_X[i], Coordenadas_Y[i]]);
         
         push!(Poligonos, [Segmento1, Segmento2, Segmento3, Segmento4]);
-        
     end
     
     return Poligonos
@@ -120,7 +118,6 @@ function encontrar_Poligono(Punto, Poligonos, Informacion_Duales)
         if dentro(Poligonos[i], Punto)
             return Informacion_Duales[i]
         end
-        
     end
     #Si no encuentra polígono, que nos mande impresión con dicha información
     println("Error: No hay polígono que contenga al punto")
