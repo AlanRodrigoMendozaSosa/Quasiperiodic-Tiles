@@ -32,10 +32,6 @@ A recommended order of lecture (based in how the code was developed) is:
 
 **Note: The next folders will be updated soon as a new Voronoi algorithm developed by Enrique was released.**
 
-1.- Container_Polygon_(Voronoi's_Algorithm)
-
-2.- Efficiency_Test_for_Three_Containers_Polygon's_Algorithm
-
 3.- Main_Cluster's_Polygons_(Brute_Force)
 
 4.- Areas_Distribution_Main_Cluster_(Arbitrary_Symmetry)
