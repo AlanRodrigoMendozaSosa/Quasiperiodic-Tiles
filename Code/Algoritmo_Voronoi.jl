@@ -32,51 +32,24 @@ function vecinos_Voronoi(Indice, Voronoi)
     #Definimos un arreglo donde iremos guardando los centroides de los polígonos vecinos
     Vecinos_Centroides = [];
     
-    #Asociado a cada polígono de Voronoi existe una clase llamada Halfedge, la cual tiene un punto de origen (un vér-
-    #tice de los polígonos de Voronoi) y a partir de ahí va recorriendo los demás vértices.
-    Vertice_Inicial = Voronoi.faces[Indice].outerComponent; #Dupla con las coordenadas del vértice
-    Siguiente_Vertice = Voronoi.faces[Indice].outerComponent.next; #Dupla del siguiente vértice
-    
-    #Estudiemos el caso del gemelo asociado al inicial
-    Vertice_Inicial_Gemelo = Vertice_Inicial.twin
-    
-    #Contador_Vertices_Recorridos = 1;
-    #Si nos arroja un "nothing" es porque dicho vértice no es el que posee la información del polígono, por lo que
-    #habrá que pasarnos a otro hasta que hallemos el que contenga esa información.
-    while Vertice_Inicial_Gemelo.incidentFace == nothing
-        #Contador_Vertices_Recorridos += 1;
-        #Recorremos al siguiente vértice en el nuevo poligono de Voronoi
-        Vertice_Inicial_Gemelo = Vertice_Inicial_Gemelo.next;
-    end
-    #println(Contador_Vertices_Recorridos)
-    
-    #En cuanto ubicamos el vértice que posee la información, le pedimos las coordenadas de su centroide
-    Centroide = Vertice_Inicial_Gemelo.incidentFace.site;
-    push!(Vecinos_Centroides, Centroide)
-    
-    #Si el siguiente vértice no es el mismo con el que empezamos, realizamos el algoritmo para ubicar su centroide
-    #asociado distinto al polígono inicial.
-    while Vertice_Inicial.origin.coordinates != Siguiente_Vertice.origin.coordinates
-        Siguiente_Vertice_Gemelo = Siguiente_Vertice.twin; #Esto nos cambia el polígono al que "pertenece" el vértice
-        
-        #Contador_Vertices_Recorridos = 1;
-        #Si nos arroja un "nothing" es porque dicho vértice no es el que posee la información del polígono, por lo que
-        #habrá que pasarnos a otro hasta que hallemos el que contenga esa información.
-        while Siguiente_Vertice_Gemelo.incidentFace == nothing
-            #Contador_Vertices_Recorridos += 1;
-            #Recorremos al siguiente vértice en el nuevo poligono de Voronoi
-            Siguiente_Vertice_Gemelo = Siguiente_Vertice_Gemelo.next;
+    #Partimos de un lado del polígono de Voronoi que es de nuestro interés
+    Lado_Poligono_Voronoi = Voronoi.faces[Indice].outerComponent;
+
+    #Iniciamos el proceso while para recorrer todos los lados del polígono de Voronoi y en cada uno hallar el polígono vecino
+    while true
+        #Encontramos el vecino asociado al lado que estamos considerando
+        Coordenadas_Vecino = Lado_Poligono_Voronoi.twin.incidentFace.site;
+        push!(Vecinos_Centroides, Coordenadas_Vecino);
+
+        #Recorremos al siguiente lado del polígono
+        Lado_Poligono_Voronoi = Lado_Poligono_Voronoi.next;
+
+        #Checamos si hemos ya concluido de revisar todos los lados del polígono de Voronoi
+        if Lado_Poligono_Voronoi == Voronoi.faces[Indice].outerComponent
+            break
         end
-        #println(Contador_Vertices_Recorridos)
-        
-        #En cuanto ubicamos el vértice que posee la información, le pedimos las coordenadas de su centroide
-        Centroide = Siguiente_Vertice_Gemelo.incidentFace.site;
-        push!(Vecinos_Centroides, Centroide)
-        
-        #Recorremos en uno el vértice del polígono original
-        Siguiente_Vertice = Siguiente_Vertice.next
-    end    
-    
+    end
+
     return Vecinos_Centroides
 end
 
@@ -99,7 +72,7 @@ end
 #Función que nos regresa, dado un conjunto de centroides, los vértices de los polígonos que los generan. Emplea un diccionario para ello.
 #"Centroides" es un arreglo con las duplas de los centroides de interés
 #"Diccionario_Centroides" es un diccionario que relaciona los centroides con los vértices del polígono que los genera.
-function Centroides_a_Vertices(Centroides, Diccionario_Centroides)
+function centroides_A_Vertices(Centroides, Diccionario_Centroides)
     Coordenadas_X = [];
     Coordenadas_Y = [];
 
@@ -121,7 +94,6 @@ function encontrar_Poligono_Voronoi(Punto, Poligonos)
         if dentro(Poligonos[i], Punto)
             return i
         end
-        
     end
     #Si no encuentra polígono, que nos mande impresión con dicha información
     println("Error: No hay polígono que contenga al punto")
@@ -130,7 +102,7 @@ end
 #Función que genera una vecindad del arreglo cuasiperiódico alrededor de un punto dado (o arbitrario dentro de un cuadrado)
 #"N" es el margen de error que vamos a permitir en los posibles números enteros generados por la proyección del punto sobre los vectores estrella.
 #"Cota" es el Semilado de la caja centrada en el origen dentro de la cual se va a calcular el punto arbitrario si el usuario no da uno.
-function region_Local_Voronoi(N, Cota, Punto = true)
+function region_Local_Voronoi(N, Cota, Promedios_Distancia, Vectores_Estrella, Arreglo_Alfas, Punto = true)
     #Si el usuario no proporciona un punto, generamos uno
     if Punto == true
         x = rand();
@@ -176,6 +148,7 @@ function poligono_Contenedor_Voronoi(Coordenadas_X, Coordenadas_Y, Punto)
     #Definimos las duplas con las coordenadas de los centroides
     sites = [(Float64(Centroides_X[i]), Float64(Centroides_Y[i])) for i in 1:length(Centroides_X)]
 
+    #Generamos la estructura de Voronoi asociada a las coordenadas de los centroides de los polígonos en el arreglo cuasiperiódico
     voronoi = getVoronoiDiagram(sites);
     
     #Obtenemos el índice del polígono correspondiente a nuestro punto arbitrario
@@ -185,7 +158,7 @@ function poligono_Contenedor_Voronoi(Coordenadas_X, Coordenadas_Y, Punto)
     Vecinos_Centroides = vecinos_Voronoi(Indice, voronoi);
 
     #Recuperamos la información de los vértices de los polígonos de Voronoi candidatos
-    X,Y = Centroides_a_Vertices(Vecinos_Centroides, Diccionario_Centroides);
+    X,Y = centroides_A_Vertices(Vecinos_Centroides, Diccionario_Centroides);
     
     #Transformamos los vertices con coordenadas (X,Y) a estructura de polígono
     Poligonos = obtener_Segmentos_Vertices(X,Y);
@@ -193,7 +166,5 @@ function poligono_Contenedor_Voronoi(Coordenadas_X, Coordenadas_Y, Punto)
     #Iteramos sobre los polígonos candidatos para obtener el polígono contenedor
     Indice_Poligono_Contenedor = encontrar_Poligono_Voronoi(Punto, Poligonos);
     
-    plot()
-    plot([Poligonos[Indice_Poligono_Contenedor][1].inicio[1], Poligonos[Indice_Poligono_Contenedor][2].inicio[1], Poligonos[Indice_Poligono_Contenedor][3].inicio[1], Poligonos[Indice_Poligono_Contenedor][4].inicio[1], Poligonos[Indice_Poligono_Contenedor][1].inicio[1]], [Poligonos[Indice_Poligono_Contenedor][1].inicio[2], Poligonos[Indice_Poligono_Contenedor][2].inicio[2], Poligonos[Indice_Poligono_Contenedor][3].inicio[2], Poligonos[Indice_Poligono_Contenedor][4].inicio[2], Poligonos[Indice_Poligono_Contenedor][1].inicio[2]], markersize = 0.2, key = false, aspect_ratio=:equal, grid = false, color =:black)
-    scatter!([Punto[1]], [Punto[2]], markersize = 5, markeralpha = 0.5, markerstrokewidth = 0, markercolor = :red)
+    return Poligonos[Indice_Poligono_Contenedor]
 end

@@ -3,27 +3,10 @@
 function centroides_Sin_Poligono(Voronoi)
     Sitios = []; #Arreglo donde irán las coordenadas de los sitios de los polígonos que no se cierran
     for Face in Voronoi.faces #Iteramos sobre todos los centroides.
-
-        Halfedge = Face.outerComponent; #Elemento de los pol. Voronoi, si es igual a "nothing" el pol. no se cierra
-        llave = true; #Condicional para cortar el "while" una vez que se ha encontrado que el pol. no cierra
-
-        if Halfedge == nothing #Condición indicadora de que el pol. no cierra
-            push!(Sitios, Face.site); #Si no cierra mandamos las coordenadas del centroide al arreglo Sitios
-            llave = false; #Ponemos el condicional como falso para que el While no ejecute
+        if Face.area == Inf #Indicador de que el polígono está asociado a un centroide de la capa externa
+            push!(Sitios, Face.site)
         end
-
-        while llave && Halfedge.next != Face.outerComponent #Condiciones para seguir buscando si el pol. se cierra
-
-            if Halfedge.next == nothing #Condición indicadora de que el pol. no cierra
-                push!(Sitios, Face.site); #Si no cierra mandamos las coordenadas del centroide al arreglo Sitios
-                llave = false; #Ponemos el condicional como falso para que el While no ejecute
-            end
-
-            Halfedge = Halfedge.next; #Probamos con el siguiente halfedge del polígono
-        end
-
-    end
-    
+    end    
     return Sitios
 end
 
@@ -52,6 +35,7 @@ function algoritmo_Sir_Davos!(Centroides, Num_Capas_Cebolla)
     return Centroides
 end
 
+#=
 #Polygon es una variable que contiene los vértices de forma ordenada. Podrías remplazarla por un arreglo de vértices 
 #ordenados. 
 mutable struct Polygon
@@ -104,32 +88,24 @@ function area_Poligonos_Voronoi_Config_Inicial(Centroides_Sin_Cerrar, Voronoi)
     
     return Areas
 end
+=#
 
 #Función que calcula las áreas de los polígonos que están en el clúster principal de Voronoi.
 #"Centroides_Refinados" es un arreglo con los centroides tras quitarle un cierto número de capas al arreglo de Voronoi.
+#Diccionario_Centroides_Indices es un diccionario que relaciona las coordenadas del centroide de un polígono con el índice de su polígono de Voronoi
 #"Voronoi_Config_Inicial" es la estructura generada por Enrique con la función getVoronoiDiagram() considerando TODOS los centroides.
-function area_Poligonos_Voronoi_Ultima_Capa(Centroides_Refinados, Voronoi_Config_Inicial)
-    Areas = []; #arreglo que contendrá las áreas de los polígonos
-    
-    for Face in Voronoi_Config_Inicial.faces #Iteramos sobre todos los centroides
-
-        if Face.site in Centroides_Refinados #Si es "true" es uno de los buenos poligonos
-            Halfedge = Face.outerComponent; #Elemento de los pol. Voronoi, si es igual a "nothing" el pol. no se cierra
-            Vertices_Poligono = [[Halfedge.origin.coordinates[1], Halfedge.origin.coordinates[2]]];
-            
-            while Halfedge.next != Face.outerComponent
-                Halfedge = Halfedge.next
-                push!(Vertices_Poligono, [Halfedge.origin.coordinates[1], Halfedge.origin.coordinates[2]]); 
-            end
-            
-            Poligono = Polygon(Vertices_Poligono); #Generamos la estructura adecuada para la función área de Ata
-            
-            push!(Areas,area(Poligono))
-        end
-        
+function area_Poligonos_Voronoi_Ultima_Capa(Centroides_Refinados, Diccionario_Centroides_Indices, Voronoi_Config_Inicial)
+    Indices_Cluster_Ultima_Capa = []; #Arreglo donde irán los índices de los polígonos en la Config Inicial que corresponden a los del cluster principal
+    for i in Centroides_Refinados
+        push!(Indices_Cluster_Ultima_Capa, Diccionario_Centroides_Indices[i])
     end
-    
-    return Areas
+
+    Areas_Cluster_Ultima_Capa = []; #Arreglo donde irán las área de los polígonos que corresponden al cluster principal
+    for i in Indices_Cluster_Ultima_Capa
+        push!(Areas_Cluster_Ultima_Capa, Voronoi_Config_Inicial.faces[i].area)
+    end
+
+    return Areas_Cluster_Ultima_Capa
 end
 
 #Función que nos regresa las áreas de los polígonos de Voronoi tras remover una "Num_Capas_Remover" cantidad de capas externas a dicho arreglo.
@@ -144,7 +120,6 @@ function arreglo_Areas_Buenos_Poligonos(Iteraciones, Num_Capas_Remover, Margen_E
     Contador_Iteraciones = 0;
     
     for i in 1:Iteraciones
-
         #Generación del arreglo cuasiperiódico con margen de error (1era entrada) y semilado del cuadrado donde colocar un 
         #pto arbitrario.
         Coordenadas_X, Coordenadas_Y, Punto = region_Local_Voronoi(Margen_Error, Semilado_Caja, Promedios_Distancia, Vectores_Estrella, Arreglo_Alfas);
@@ -159,13 +134,11 @@ function arreglo_Areas_Buenos_Poligonos(Iteraciones, Num_Capas_Remover, Margen_E
         #Generamos la estructura de datos para los polígonos de Voronoi de los centroides de los polígonos del arreglo cuasipe.
         voronoi_inicial = getVoronoiDiagram(sites);
 
+        #Generamos el diccionario "Centroides -> Indices Voronoi" de la configuración inicial
+        Diccionario_Centroides_Indices = diccionario_Centroides_Indice_Voronoi(sites, voronoi_inicial);
+
         #Arreglo con los centroides de los polígonos a quitar
         Sitios_Centroides_Sin_Cerrar = centroides_Sin_Poligono(voronoi_inicial);
-        
-        #Obtenemos las área de todos los polígonos de Voronoi (exceptuando únicamente los "polígonos" que no se cierran).
-        #Es decir, iteramos sobre todos los centroides, si el centroide corresponde a un polígono que no se cierra en Voronoi
-        #lo ignoramos, caso contrario obtenemos el área del polígono.
-        #Areas_Config_Inicial = area_Poligonos_Voronoi_Config_Inicial(Sitios_Centroides_Sin_Cerrar, voronoi_inicial);
         
         #Hacemos una copia del arreglo de Centroides para poder conservar la configuración inicial y poder hacer distintas 
         #pruebas con esa misma configuración.
@@ -181,11 +154,7 @@ function arreglo_Areas_Buenos_Poligonos(Iteraciones, Num_Capas_Remover, Margen_E
         #y con áreas grandes, por eso es que el cálculo de las áreas debe ser sobre los buenos polígonos pero en el arreglo de
         #polígonos de Voronoi inicial) con todos los centroides, si el centroide es el asociado a un buen polígono se cálcula
         #su área, caso contrario no.
-        Areas_Ultima_Capa = area_Poligonos_Voronoi_Ultima_Capa(Centroides_Copia, voronoi_inicial);
-        
-        #Área máxima y mínima de los buenos polígonos
-        #println("El área máxima de los buenos polígonos es: ", maximum(Areas_Ultima_Capa))
-        #println("El área mínima de los buenos polígonos es: ", minimum(Areas_Ultima_Capa))
+        Areas_Ultima_Capa = area_Poligonos_Voronoi_Ultima_Capa(Centroides_Copia, Diccionario_Centroides_Indices, voronoi_inicial);
         
         push!(Arreglo_Buenas_Areas, Areas_Ultima_Capa);
         Contador_Iteraciones += 1;
