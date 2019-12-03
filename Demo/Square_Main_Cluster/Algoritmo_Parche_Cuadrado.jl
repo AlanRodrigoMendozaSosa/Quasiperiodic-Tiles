@@ -82,22 +82,6 @@ function parche_Cuadrado(Informacion_Parche, Semilado, Factor_Reduccion, Promedi
     #Paso 6: Recuperamos los polígonos del arrego cuasiperiódico que corresponden a los clúster principales.
     #Visualizamos ahora el arreglo cuasiperiódico tras quitarle las n capas.
     Coordenadas_X_CP, Coordenadas_Y_CP = centroides_A_Vertices(Arreglo_Centroides, Diccionario_Centroides_Unico);
-    #Coordenadas_X_CP1, Coordenadas_Y_CP1 = centroides_A_Vertices_2(Arreglo_Centroides, Diccionario_Centroides1);
-    #Coordenadas_X_CP2, Coordenadas_Y_CP2 = centroides_A_Vertices_2(Arreglo_Centroides, Diccionario_Centroides2);
-    #Coordenadas_X_CP3, Coordenadas_Y_CP3 = centroides_A_Vertices_2(Arreglo_Centroides, Diccionario_Centroides3);
-    #Coordenadas_X_CP4, Coordenadas_Y_CP4 = centroides_A_Vertices_2(Arreglo_Centroides, Diccionario_Centroides4);
-    
-    #Paso 7: Agrupamos todos los buenos vértices de los polígonos sin repetir en un sólo arreglo de coordenadas X y 
-    #coordenadas Y.
-    #Coordenadas_X_CPC = vcat(Coordenadas_X_CP1, Coordenadas_X_CP2, Coordenadas_X_CP3, Coordenadas_X_CP4)
-    #Coordenadas_Y_CPC = vcat(Coordenadas_Y_CP1, Coordenadas_Y_CP2, Coordenadas_Y_CP3, Coordenadas_Y_CP4)
-    
-    #Paso_Reparar_Bug: Obtengamos los polígonos generados por cada punto.
-    #Coordenadas_X_CP1_BUG, Coordenadas_Y_CP1_BUG = Centroides_a_Vertices(Centroides_Iterados1, Diccionario_Centroides1);
-    #Coordenadas_X_CP2_BUG, Coordenadas_Y_CP2_BUG = Centroides_a_Vertices(Centroides_Iterados2, Diccionario_Centroides2);
-    #Coordenadas_X_CP3_BUG, Coordenadas_Y_CP3_BUG = Centroides_a_Vertices(Centroides_Iterados3, Diccionario_Centroides3);
-    #Coordenadas_X_CP4_BUG, Coordenadas_Y_CP4_BUG = Centroides_a_Vertices(Centroides_Iterados4, Diccionario_Centroides4);
     
     return Coordenadas_X_CP, Coordenadas_Y_CP, Punto
-    #return Coordenadas_X_CP1_BUG, Coordenadas_Y_CP1_BUG
 end
