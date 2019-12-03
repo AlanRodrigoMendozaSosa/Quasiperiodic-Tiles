@@ -32,8 +32,6 @@ A recommended order of lecture (based in how the code was developed) is:
 
 **Note: The next folders will be updated soon as a new Voronoi algorithm developed by Enrique was released.**
 
-5.- Main_Cluster's_Polygons_(Areas_Algorithm)
-
 6.- Number_of_Edges_Distribution_(Main_Cluster)_(Voronoi's_Polygons)
 
 7.- Main_Cluster_Size
