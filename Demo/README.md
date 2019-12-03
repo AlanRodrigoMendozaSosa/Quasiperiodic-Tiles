@@ -32,8 +32,6 @@ A recommended order of lecture (based in how the code was developed) is:
 
 **Note: The next folders will be updated soon as a new Voronoi algorithm developed by Enrique was released.**
 
-3.- Main_Cluster's_Polygons_(Brute_Force)
-
 4.- Areas_Distribution_Main_Cluster_(Arbitrary_Symmetry)
 
 5.- Main_Cluster's_Polygons_(Areas_Algorithm)
