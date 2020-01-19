@@ -30,3 +30,5 @@ A recommended order of lecture (based in how the code was developed) is:
 13.- Square_Main_Cluster
 
 14.- MSD_Various_Points
+
+15.- Safe_and_Efficient_Obstacle_Radius
