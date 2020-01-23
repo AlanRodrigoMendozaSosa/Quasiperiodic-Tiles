@@ -7,53 +7,38 @@ function distancia_Punto_Segmento(Punto, P1, P2)
     return abs((P2[2] - P1[2])*Punto[1] - (P2[1] - P1[1])*Punto[2] + P2[1]*P1[2] - P2[2]*P1[1])/(sqrt((P2[2] - P1[2])^2 + (P2[1] - P1[1])^2));
 end
 
-#A function that, given the coordinates of the vertices (X,Y) of the Quasiperiodic Array, determines the minimum
-#distance between each vertex and the sides of his container polygon IF the vertex is inside of the Square Patch.
-#The function return the minimum of this minimum distances.
+#A function that, given the coordinates of the vertices (X,Y) of the Quasiperiodic Array, return an array with the minimum
+#distance between each vertex and his neighbors IF the vertex is inside of the Square Patch.
 #Voronoi: The Voronoi's Polygons' structure of the vertices of the Quasiperiodic Array
 #Dictionario_Vertices_Parche_Cuadrado: A dictionary that relates Vertex (X,Y) -> "true" or "false" depending if the vertex is inside the square or not
-function radio_Eficiente_Seguro(Voronoi, Dictionario_Vertices_Parche_Cuadrado)
+function arreglo_Minimas_Distancias(Voronoi, Diccionario_Vertices_Parche_Cuadrado)
     #Definimos el arreglo que contendrá la mínima distancia de un vértice a sus lados del polígono contenedor
     Arreglo_Minimas_Distancias = [];
     
-    for Poligono_Voronoi in Voronoi.faces #Iteramos sobre todos los polígonos de Voronoi
-        Vertice = Poligono_Voronoi.site; #Obtenemos el vértice del arreglo cuasiperiódico asociado al polígono
-        if Dictionario_Vertices_Parche_Cuadrado[Vertice] #Verificamos si el vértice está dentro del parche cuadrado
-            #Partimos de un lado del polígono de Voronoi que es de nuestro interés
-            Lado_Poligono_Voronoi = Poligono_Voronoi.outerComponent;
-            #Definimos el arreglo que contendrá las distancias del vértice a los lados del polígono
-            Arreglo_Distancias = [];
-            
-            #Iniciamos el proceso while para recorrer todos los lados del polígono de Voronoi
-            while true
-                #Obtenemos los puntos que conforman el lado del polígono de Voronoi
-                Punto1 = Lado_Poligono_Voronoi.origin.coordinates;
-                Punto2 = Lado_Poligono_Voronoi.next.origin.coordinates;
-                
-                if (Punto1[1] - Punto2[1])^2 + (Punto1[2] - Punto2[2])^2 < 1e-6 #El lado es muy pequeño, es un falso lado del polígono Voronoi
-                    nothing
-                else
-                    #Obtenemos la distancia entre el vértice y el segmento dado por [Punto1, Punto2]
-                    Distancia = distancia_Punto_Segmento(Vertice, Punto1, Punto2);
-                    push!(Arreglo_Distancias, Distancia)
-                end
-                
-                #Recorremos al siguiente lado del polígono
-                Lado_Poligono_Voronoi = Lado_Poligono_Voronoi.next;
-                
-                #Checamos si hemos ya concluido de revisar todos los lados del polígono de Voronoi
-                if Lado_Poligono_Voronoi === Poligono_Voronoi.outerComponent
-                    break
-                end
+    for i in 1:length(Voronoi.faces)
+        Arreglo_Distancias_Vertice_Vecinos = Float64[];
+        Vertice = Voronoi.faces[i].site;
+        if Diccionario_Vertices_Parche_Cuadrado[Vertice] #Verificamos si el vértice está dentro del parche cuadrado
+            Vertices_Vecinos = vecinos_Voronoi(i, Voronoi)
+            for j in Vertices_Vecinos
+                Distancia = sqrt((j[1] - Vertice[1])^2 + (j[2] - Vertice[2])^2)
+                push!(Arreglo_Distancias_Vertice_Vecinos, Distancia)
             end
-            
-            #Obtenemos la mínima distancia del vértice a los lados de su polígono
-            Minima_Distancia = minimum(Arreglo_Distancias);
-            push!(Arreglo_Minimas_Distancias, Minima_Distancia);
+            push!(Arreglo_Minimas_Distancias, minimum(Arreglo_Distancias_Vertice_Vecinos))
         end
     end
     
-    return minimum(Arreglo_Minimas_Distancias)
+    return Arreglo_Minimas_Distancias
+end
+
+#A function that, given the coordinates of the vertices (X,Y) of the Quasiperiodic Array, determines the minimum
+#radius of the obstacles that ensures that the obstacle will be contained in the corresponding Voronoi's polygon
+#Voronoi: The Voronoi's Polygons' structure of the vertices of the Quasiperiodic Array
+#Dictionario_Vertices_Parche_Cuadrado: A dictionary that relates Vertex (X,Y) -> "true" or "false" depending if the vertex is inside the square or not
+function radio_Eficiente_Seguro(Voronoi, Diccionario_Vertices_Parche_Cuadrado)
+    Arreglo_Candidatos_Radio = arreglo_Minimas_Distancias(Voronoi, Diccionario_Vertices_Parche_Cuadrado);
+
+    return minimum(Arreglo_Candidatos_Radio)/2
 end
 
 #A function that obtain the safe (and efficient) radius of the obstacles in a Quasiperiodic Array, looking in a given
