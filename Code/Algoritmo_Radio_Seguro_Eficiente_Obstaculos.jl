@@ -1,12 +1,3 @@
-#A function that, given the coordinates P1=(X1,Y1) and P2=(X2,Y2), and given a Point=(X,Y), return the distance between
-#the Point and the line that passes by the points P1 and P2
-#Punto: The coordinates (X,Y) of a given point.
-#P1: The coordinates (X1,Y1) of a given point P1.
-#P2: The coordinates (X2,Y2) of a given point P2.
-function distancia_Punto_Segmento(Punto, P1, P2)
-    return abs((P2[2] - P1[2])*Punto[1] - (P2[1] - P1[1])*Punto[2] + P2[1]*P1[2] - P2[2]*P1[1])/(sqrt((P2[2] - P1[2])^2 + (P2[1] - P1[1])^2));
-end
-
 #A function that, given the coordinates of the vertices (X,Y) of the Quasiperiodic Array, return an array with the minimum
 #distance between each vertex and his neighbors IF the vertex is inside of the Square Patch.
 #Voronoi: The Voronoi's Polygons' structure of the vertices of the Quasiperiodic Array
