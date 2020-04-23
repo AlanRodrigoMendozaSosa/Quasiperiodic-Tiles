@@ -1,4 +1,4 @@
-#A function that, given the coordinates of the vertices (X,Y) of the Quasiperiodic Array, return an array with the minimum
+#A function that, given the Voronoi structure of the vertices of the Quasiperiodic lattice, return an array with the minimum
 #distance between each vertex and his neighbors IF the vertex is inside of the Square Patch.
 #Voronoi: The Voronoi's Polygons' structure of the vertices of the Quasiperiodic Array
 #Dictionario_Vertices_Parche_Cuadrado: A dictionary that relates Vertex (X,Y) -> "true" or "false" depending if the vertex is inside the square or not
@@ -32,8 +32,7 @@ function radio_Eficiente_Seguro(Voronoi, Diccionario_Vertices_Parche_Cuadrado)
     return minimum(Arreglo_Candidatos_Radio)/2
 end
 
-#A function that obtain the safe (and efficient) radius of the obstacles in a Quasiperiodic Array, looking in a given
-#number of Square Patches.
+#A function that obtain the safe (and efficient) radius of the obstacles in a Quasiperiodic Array, looking in a given number of Square Patches.
 #Number_Square_Patch: The number of Square Patches that the users wants to review to obtain the Safe Obstacle Radius
 #Patch_Information: An array that contains information about the semi-circular patches of the Quasiperiodic Array
 #Reduction_Factor: The factor with which we multiple the Average Radius to generate the Safe Radius
@@ -46,8 +45,11 @@ function radio_Eficiente_Seguro_Iterado(Number_Square_Patch, Patch_Information, 
     for j in 1:Number_Square_Patch
         println("The algorithm is calculating the Minimum Distance in the Square Patch $(j)")
         
+        #Generate an arbitrary point in the 2D plane
+        APoint_Initial = punto_Arbitrario(Patch_Information[2]);
+
         #Generate a square patch of the Quasiperiodic Array around the Initial Position
-        X,Y,APoint_Initial,Centroids,Dictionary_Centroids = parche_Cuadrado(Patch_Information,Patch_Information[2],Reduction_Factor,Average_Distance_Stripes,Star_Vectors,Alphas_Array);
+        X,Y = parche_Cuadrado(Patch_Information,Reduction_Factor,Average_Distance_Stripes,Star_Vectors,Alphas_Array,APoint_Initial);
 
         #Obtain the vertices of all the polygons as duples.
         Sites_Vertices = [(Float64(X[i]), Float64(Y[i])) for i in 1:length(X)];
@@ -68,7 +70,7 @@ function radio_Eficiente_Seguro_Iterado(Number_Square_Patch, Patch_Information, 
         end
 
         Safe_Obstacle_Radius = radio_Eficiente_Seguro(Voronoi_Vertices, Dictionary_Vertices_Inside_Square);
-        Array_Minimum_Distance_Patch[j] = Safe_Obstacle_Radius;
+        Array_Minimum_Distance_Patch[j] += Safe_Obstacle_Radius;
     end
 
     return minimum(Array_Minimum_Distance_Patch)
