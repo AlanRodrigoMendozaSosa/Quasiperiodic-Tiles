@@ -80,7 +80,7 @@ function dentro(Poligono, Punto)
     end
     
     #Calculemos el número de intersecciones que hay entre los segmentos del arreglo prueba.
-    #Hay que regresar true o false, en lugar del texto, para que esto sea funcional.
+    #Si el número de intersecciones es cero, manda "false"
     if iseven(length(Contenedor))
         return false;
     else
@@ -111,12 +111,17 @@ end
 #"Punto" es el punto que queremos checar si está dentro o fuera. Es un arreglo con dos entradas.
 #"Poligonos" es un arreglo de arreglos, cada uno con los segmentos que conforman al polígono en cuestión.
 #"Informacion_Duales" es un arreglo con la información de cómo se generó cada polígono.
-function encontrar_Poligono(Punto, Poligonos, Informacion_Duales)
+function encontrar_Poligono(Punto, Poligonos)
+    #Definimos un contenedor donde colocaremos las coordenadas [X,Y] de los vértices del polígono contenedor
+    Vertices = [];
     #Iteremos sobre los posibles polígonos para encontrar el que contenga al punto
     for i in 1:length(Poligonos)
-        #Si el polígono i-ésimo contiene al punto, regresa la info de ese polígono
+        #Si el polígono i-ésimo contiene al punto, regresa los segmentos que lo conforman
         if dentro(Poligonos[i], Punto)
-            return Informacion_Duales[i]
+            for j in 1:4
+                push!(Vertices, Poligonos[i][j].inicio);
+            end
+            return Vertices
         end
     end
     #Si no encuentra polígono, que nos mande impresión con dicha información
