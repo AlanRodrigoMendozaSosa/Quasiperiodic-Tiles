@@ -1,5 +1,4 @@
-#This is a function made by Atahualpa that gives the position of the collition and the time of
-#collition of a particle and a sphere
+#This is a function made by Atahualpa that gives the position of the collition and the time of collition of a particle and a sphere
 "collision(x1,x2,r,v), dado la posicion de la particula en Rn, x1, la posición del centro de la esfera x2, el radio
 de la esfera r, y la velocidad de la particula v, regresa el punto de colisión x y el tiempo que tarda en alcanzarlo
 t"

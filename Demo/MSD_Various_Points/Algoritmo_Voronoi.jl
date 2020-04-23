@@ -1,28 +1,23 @@
-#Función que nos regresa el centroide de un conjunto de rombos (paralelepípedo de cuatro vértices) dados sus vértices
-#"Coordenadas_X" es un arreglo con las coordenadas en X de los vértices de los polígonos. Cada 4 entradas corresponden a un mismo polígono.
-#"Coordenadas_Y" es un arreglo con las coordenadas en Y de los vértices de los polígonos. Cada 4 entradas corresponden a un mismo polígono.
-function centroides(Coordenadas_X, Coordenadas_Y)
-    #Generamos los arreglos que contendrán las coordenadas de los centroides
-    Centroide_X = [];
-    Centroide_Y = [];
+#Función que nos regresa el centroide de un conjunto de rombos (paralelepípedo de cuatro vértices) dados sus vértices.
+#"Vertices" es un arreglo con las coordenadas (X,Y) de los vértices de los polígonos. Cada 4 entradas corresponden a un mismo polígono.
+function centroides(Vertices)
+    #Paso 1: Generamos el arreglo que contendrá las coordenadas de los centroides.
     Centroides = [];
     
-    #Definimos un diccionario que nos servirá después para, dado un centroide, nos regrese sus vértices
-    Diccionario_Centroides = Dict()
+    #Paso 2: Definimos un diccionario que nos servirá después para, dado un centroide, nos regrese sus vértices
+    Diccionario_Centroides = Dict();
     
-    #Para cada cuatro entradas, calculamos el centroide que es el promedio de los cuatro vértices
-    for i in 1:4:length(Coordenadas_X)
-        X = (Coordenadas_X[i]+Coordenadas_X[i+1]+Coordenadas_X[i+2]+Coordenadas_X[i+3])/4;
-        Y = (Coordenadas_Y[i]+Coordenadas_Y[i+1]+Coordenadas_Y[i+2]+Coordenadas_Y[i+3])/4;
+    #Paso 3: Para cada cuatro entradas, calculamos el centroide que es el promedio de los cuatro vértices
+    for i in 1:4:length(Vertices)
+        X = (Vertices[i][1] + Vertices[i+1][1] + Vertices[i+2][1] + Vertices[i+3][1])/4;
+        Y = (Vertices[i][2] + Vertices[i+1][2] + Vertices[i+2][2] + Vertices[i+3][2])/4;
         
-        push!(Centroide_X, X)
-        push!(Centroide_Y, Y)
-        push!(Centroides, (Float64(X),Float64(Y))) #Se pone en Float64 debido a que el algoritmo de Enrique sólo trabaja con ese formato
+        push!(Centroides, (Float64(X),Float64(Y))); #Se pone en Float64 debido a que el algoritmo de Enrique (Voronoi) sólo trabaja con ese formato
         
-        Diccionario_Centroides[(Float64(X),Float64(Y))] = ([Coordenadas_X[i], Coordenadas_X[i+1], Coordenadas_X[i+2], Coordenadas_X[i+3]], [Coordenadas_Y[i], Coordenadas_Y[i+1], Coordenadas_Y[i+2], Coordenadas_Y[i+3]])
+        Diccionario_Centroides[(Float64(X),Float64(Y))] = ([Vertices[i][1], Vertices[i+1][1], Vertices[i+2][1], Vertices[i+3][1]], [Vertices[i][2], Vertices[i+1][2], Vertices[i+2][2], Vertices[i+3][2]]);
     end
     
-    return Centroide_X, Centroide_Y, Centroides, Diccionario_Centroides
+    return Centroides, Diccionario_Centroides
 end
 
 #Definimos una función que, dado el índice asociado a un polígono de Voronoi dentro de todos los generados, nos regresa el índice de todos los polígonos vecinos.
@@ -70,7 +65,7 @@ function indice_Voronoi_Centroide(Dupla_Centroide, Voronoi)
 end
 
 #Función que nos regresa, dado un conjunto de centroides, los vértices de los polígonos que los generan. Emplea un diccionario para ello.
-#"Centroides" es un arreglo con las duplas de los centroides de interés
+#"Centroides" es un arreglo con las duplas (X,Y) de los centroides de interés
 #"Diccionario_Centroides" es un diccionario que relaciona los centroides con los vértices del polígono que los genera.
 function centroides_A_Vertices(Centroides, Diccionario_Centroides)
     Coordenadas_X = [];
@@ -99,56 +94,41 @@ function encontrar_Poligono_Voronoi(Punto, Poligonos)
     println("Error: No hay polígono que contenga al punto")
 end
 
-#Función que genera una vecindad del arreglo cuasiperiódico alrededor de un punto dado (o arbitrario dentro de un cuadrado)
-#"N" es el margen de error que vamos a permitir en los posibles números enteros generados por la proyección del punto sobre los vectores estrella.
-#"Cota" es el Semilado de la caja centrada en el origen dentro de la cual se va a calcular el punto arbitrario si el usuario no da uno.
-function region_Local_Voronoi(N, Cota, Promedios_Distancia, Vectores_Estrella, Arreglo_Alfas, Punto = true)
-    #Si el usuario no proporciona un punto, generamos uno
-    if Punto == true
-        x = rand();
-        y = rand();
-
-        if (x > 0.5) && (y > 0.5)
-            Punto = [rand()*Cota, rand()*Cota];
-        elseif (x > 0.5) && (y < 0.5)
-            Punto = [rand()*Cota, -rand()*Cota];
-        elseif (x < 0.5) && (y > 0.5)
-            Punto = [-rand()*Cota, rand()*Cota];
-        elseif (x < 0.5) && (y < 0.5)
-            Punto = [-rand()*Cota, -rand()*Cota];
-        end
-    end
-    
-    #Paso 1: Dado el punto proyectamos para obtener los enteros aproximados que pueden dar lugar al polígono contenedor.
+#Función que genera una vecindad de la retícula cuasiperiódica alrededor de un punto dado
+#"N" es el margen de error asociado a los números enteros generados por la proyección del punto sobre los vectores estrella.
+#"Promedios_Distancia" es el arreglo con la separación entre las franjas cuasiperiódicas.
+#"Vectores_Estrella" es el arreglo con los vectores estrella que generan la retícula cuasiperiódica deseada.
+#"Arreglo_Alfas" es el arreglo con los valores numéricos de la separación respecto al origen del conjunto de rectas ortogonales a los vectores estrella en el método generalizado dual.
+#"Punto" es el punto alrededor de donde se va a generar la vecindad.
+function region_Local_Voronoi(N, Promedios_Distancia, Vectores_Estrella, Arreglo_Alfas, Punto)
+    #Paso 1: Dado el Punto proyectamos este con los Vectores Estrella para obtener los enteros aproximados asociados al polígono contenedor.
+    #Salida: [n1,n2,n3,...]
     Proyecciones = proyecciones_Pto_Direccion_Franjas(Punto, Promedios_Distancia, Vectores_Estrella);
 
-    #Paso 2: A partir de los valores enteros aproximados, generamos la vecindad del arreglo cuasiperiódico que contenga al
-    #punto.
-    Puntos_Duales, Informacion_Duales = generador_Vecindades_Vertices(Proyecciones, Vectores_Estrella, Arreglo_Alfas, N);
-
-    #Paso 3: Separamos en coordenadas X y coordenadas Y los vértices de los polígonos que conforman la vecindad del punto
-    #anterior.
-    Coordenadas_X, Coordenadas_Y = separacion_Arreglo_de_Arreglos_2D(Puntos_Duales);
+    #Paso 2: A partir de los valores enteros aproximados, generamos la vecindad del arreglo cuasiperiódico que contenga al punto.
+    #Salida: [[X,Y]]
+    Puntos_Duales = generador_Vecindades_Vertices(Proyecciones, Vectores_Estrella, Arreglo_Alfas, N);
     
-    return Coordenadas_X, Coordenadas_Y, Punto
+    return Puntos_Duales
 end
 
 #Función que busca el polígono del arreglo cuasiperiódico que contiene al punto de interés empleando polígonos de Voronoi.
-#"Coordenadas_X" es un arreglo con las coordenadas en X de los vértices de los polígonos. Cada 4 entradas corresponden a un mismo polígono.
-#"Coordenadas_Y" es un arreglo con las coordenadas en Y de los vértices de los polígonos. Cada 4 entradas corresponden a un mismo polígono.
+#"Coordenadas_Vertices" es un arreglo con las coordenadas en (X,Y) de los vértices de los polígonos. Cada 4 entradas corresponden a un mismo polígono.
 #"Punto" es un arreglo dos dimensional con las coordenadas de un punto en el espacio 2D.
-function poligono_Contenedor_Voronoi(Coordenadas_X, Coordenadas_Y, Punto, Centroides, Diccionario_Centroides)
+function poligono_Contenedor_Voronoi(Coordenadas_Vertices, Punto)
+    #Paso 4: Obtenemos el conjunto de centroides de nuestros futuros polígonos.
+    Centroides, Diccionario_Centroides = centroides(Coordenadas_Vertices);
+
+    #Paso 5: Agregamos al conjunto de Centroides las coordenadas del punto arbitrario
+    push!(Centroides, (Float64(Punto[1]), Float64(Punto[2])))
+
     #Definimos las duplas con las coordenadas de los centroides
-    sites = [(Float64(Centroides[i][1]), Float64(Centroides[i][2])) for i in 1:length(Centroides)];
+    sites = [(Float64(Centroides[i][1]), Float64(Centroides[i][2])) for i in 1:length(Centroides)]
 
-    #Agregamos el punto de interés a la lista de centroides
-    push!(sites, (Float64(Punto[1]), Float64(Punto[2])))
-
-    #Generamos la estructura de Voronoi asociada a las coordenadas de los centroides de los polígonos en el arreglo cuasiperiódico
     voronoi = getVoronoiDiagram(sites);
     
     #Obtenemos el índice del polígono correspondiente a nuestro punto arbitrario
-    Indice = indice_Voronoi_Centroide(sites[end], voronoi);
+    Indice = indice_Voronoi_Centroide((Float64(Punto[1]), Float64(Punto[2])), voronoi);
 
     #Obtenemos los vecinos al polígono de Voronoi asociado a nuestro punto arbitrario
     Vecinos_Centroides = vecinos_Voronoi(Indice, voronoi);
@@ -162,5 +142,5 @@ function poligono_Contenedor_Voronoi(Coordenadas_X, Coordenadas_Y, Punto, Centro
     #Iteramos sobre los polígonos candidatos para obtener el polígono contenedor
     Indice_Poligono_Contenedor = encontrar_Poligono_Voronoi(Punto, Poligonos);
     
-    return Poligonos[Indice_Poligono_Contenedor], Vecinos_Centroides[Indice_Poligono_Contenedor]
+    return Poligonos[Indice_Poligono_Contenedor]
 end
