@@ -1,3 +1,5 @@
+struct DeadTrajectory <: Exception end
+
 #Función que busca los vertices del arreglo cuasiperiódico más cercanos al punto de interés empleando polígonos de Voronoi.
 #"Punto" es un arreglo dos dimensional con las coordenadas de un punto en el espacio 2D.
 #"Vertices_Unicos" es un arreglo con las coordenadas (X,Y) de los vértices sin repetir.
@@ -36,146 +38,7 @@ function vertice_Cercano(Candidatos, Punto)
     return Candidatos[Diccionario_Norma_Indice[minimum(Distancias)]]
 end
 
-#Función que regresa la posición y velocidad de la partícula tras la colisión con el obstáculo, así como el tiempo requerido para la colisión. 
-#Si no hay colisión, regresa la posición y velocidad inicial y un tiempo de colición infinito.
-#Posicion_Inicial: Coordenadas (X,Y) de la posición de la partícula antes de la colisión.
-#Velocidad_Inicial: Coordenadas (Vx, Vy) de la velocidad de la partícula antes de la colisión.
-#Radio_Obstaculo: Radio de los obstáculos.
-#Posicion_Obstaculo: Coordenadas (Ox, Oy) de la posición del obstáculo.
-#funcion_Posicion: Función que determina la posición tras la interacción Partícula-Obstáculo.
-#funcion_Velocidad: Función que determina la velocidad tras la interacción Partícula-Obstáculo.
-function colision_Obstaculo(Posicion_Inicial, Velocidad_Inicial, Radio_Obstaculo, Posicion_Obstaculo, funcion_Posicion::Function, funcion_Velocidad::Function)
-    Posicion_Colision, Tiempo_Colision = funcion_Posicion(Posicion_Inicial, Posicion_Obstaculo, Radio_Obstaculo, Velocidad_Inicial);
-    
-    if Tiempo_Colision < Inf
-        Velocidad_Final = funcion_Velocidad(Posicion_Colision, Posicion_Obstaculo, Velocidad_Inicial);
-        return Posicion_Colision, Velocidad_Final, Tiempo_Colision
-    else
-        return Posicion_Inicial, Velocidad_Inicial, Tiempo_Colision
-    end
-end
-
-#Función que, dados los puntos A y B del segmento AB y los puntos C y D del segmento CD nos regresa el punto de intersección de ambas rectas.
-#A,B,C,D: Arreglos de la forma (x,y).
-function interseccion_Rectas(A, B, C, D)
-    #Obtengamos los coeficientes "a1", "b1" y "c1" asociados a la línea AB:
-    #a1x + b1y = c1
-    a1 = B[2] - A[2];
-    b1 = A[1] - B[1];
-    c1 = a1*A[1] + b1*A[2];
-    
-    #Obtengamos los coeficientes "a2", "b2" y "c2" asociados a la línea CD
-    #a2x + b2y = c2
-    a2 = D[2] - C[2];
-    b2 = C[1] - D[1];
-    c2 = a2*C[1] + b2*C[2];
-    
-    Determinante = a1*b2 - a2*b1;
-    
-    #Chequemos si las líneas son paralelas o no
-    if Determinante == 0 #Líneas paralelas
-        return [Inf, Inf] #Punto de colisión
-    else
-        return [(b2*c1 - b1*c2)/Determinante, (a1*c2 - a2*c1)/Determinante] #Pto Colision
-    end
-end
-
-#Función que, dada la posición inicial y la posición final de una partícula, con velocidad V, regresa el tiempo que tarda en desplazarse.
-#Posicion_Inicial: Arreglo [X,Y] con las coordenadas de la posición inicial de la partícula.
-#Posicion_Inicial: Arreglo [X,Y] con las coordenadas de la posición final de la partícula.
-#Rapidez: Escalar asociado a la rapidez de la partícula (Norma de su velocidad).
-function tiempo_Vuelo(Posicion_Inicial, Posicion_Final, Rapidez)
-    #Obtenemos la distancia euclidiana entre los dos puntos
-    Distancia = norm(Posicion_Final - Posicion_Inicial);
-    
-    #El tiempo de vuelo está determinado por t = Distancia/Rapidez
-    return Distancia/Rapidez;
-end
-
-#Función que dado el índice del polígono de Voronoi que contiene a la partícula, su posición y su velocidad, nos regresa el tiempo de vuelo en salir del poligono, 
-#así como el índice del polígono al cual llega.
-#Posicion_Particula: Posición de la partícula.
-#Velocidad_Particula: Velocidad de la partícula.
-#Voronoi: Estructura de Voronoi de los vértices.
-#Indice_Poligono_Contenedor: Indice del polígono que contiene a la partícula.
-#Diccionario_Vertice_Indice: Diccionario "Vertice (X,Y) -> Indice_Voronoi".
-function cambio_Poligono(Posicion_Particula, Velocidad_Particula, Voronoi, Indice_Poligono_Contenedor, Extremos_Entrada, Diccionario_Vertices_Indice, Diccionario_Vertices_Cuadrado)
-    if Diccionario_Vertices_Cuadrado[Voronoi.faces[Indice_Poligono_Contenedor].site] #Si la condición se cumple, estamos en un vértice dentro del parche cuadrado seguro
-        Arreglo_Tiempos_Vuelo = Float64[]; #Arreglo donde iremos guardando los tiempos de vuelo
-        Diccionario_Tiempos_Vuelo_Indice = Dict(); #Diccionario que relaciona "tiempo -> Indice_Voronoi"
-        Diccionario_Tiempos_Vuelo_Extremos = Dict(); #Diccionario que relaciona "tiempo -> Vertices del lado por el que entra la partícula"
-
-        #Determinamos el punto final de la partícula tras moverse un tiempo t = 1.
-        Posicion_Particula_2 = Posicion_Particula + Velocidad_Particula;
-        
-        #Partimos de un lado del polígono de Voronoi que es de nuestro interés
-        Lado_Poligono_Voronoi = Voronoi.faces[Indice_Poligono_Contenedor].outerComponent;
-        
-        #Iniciamos el proceso while para recorrer todos los lados del polígono de Voronoi y en cada uno hallar el polígono vecino
-        while true
-            #Encontramos el indice del vecino asociado al lado que estamos considerando
-            Indice_Vecino = Diccionario_Vertices_Indice[Lado_Poligono_Voronoi.twin.incidentFace.site];
-            #println("El vecino es $(Indice_Vecino)")
-            #Obtenemos los puntos que conforman el lado del polígono de Voronoi
-            Punto1 = Lado_Poligono_Voronoi.origin.coordinates;
-            Punto2 = Lado_Poligono_Voronoi.next.origin.coordinates;
-
-            if [Punto1, Punto2] == Extremos_Entrada || [Punto2, Punto1] == Extremos_Entrada #Si es la puerta por donde entró, no la consideramos
-                nothing
-            elseif (Punto1[1] - Punto2[1])^2 + (Punto1[2] - Punto2[2])^2 < 1e-6 #El lado es muy pequeño, es un falso lado del polígono Voronoi
-            	nothing
-            else            
-                #Calculamos el punto de intersección entre la partícula y la línea descrita por ese lado
-                Punto_Colision = interseccion_Rectas(Posicion_Particula, Posicion_Particula_2, Punto1, Punto2);
-                
-                if dot(Punto_Colision - Posicion_Particula, Velocidad_Particula) < 0.0 #La colisión se da a tiempos negativos
-                    push!(Arreglo_Tiempos_Vuelo, Inf); #Agregamos el tiempo de vuelo al arreglo
-                else
-                    Tiempo_Vuelo = Float64(tiempo_Vuelo(Posicion_Particula, Punto_Colision, 1)); #Tiempo que tardaría la partícula en colisionar
-                    push!(Arreglo_Tiempos_Vuelo, Tiempo_Vuelo); #Añadimos el tiempo de vuelo al arreglo
-                    Diccionario_Tiempos_Vuelo_Indice[Tiempo_Vuelo] = Indice_Vecino; #Relacionamos el tiempo de vuelo con el índice del vecino
-                    Diccionario_Tiempos_Vuelo_Extremos[Tiempo_Vuelo] = [Punto1, Punto2]; #Relacionamos el tiempo de vuelo con la puerta de entrada a la partícula
-                end
-            end
-            
-            #Recorremos al siguiente lado del polígono
-            Lado_Poligono_Voronoi = Lado_Poligono_Voronoi.next;
-
-            #Checamos si hemos ya concluido de revisar todos los lados del polígono de Voronoi
-            if Lado_Poligono_Voronoi === Voronoi.faces[Indice_Poligono_Contenedor].outerComponent
-                break
-            end
-        end
-        
-        #Obtenemos el mínimo de los tiempos de vuelo
-        Tiempo_Vuelo_Minimo = minimum(Arreglo_Tiempos_Vuelo);
-        
-        if Tiempo_Vuelo_Minimo == Inf
-            println("Error 1")
-            throw(ArgumentError("Contiene $(Indice_Poligono_Contenedor) y falla"))
-        end
-
-        #EL PRESENTE WHILE FUE LA SOLUCIÓN A UN ERROR QUE DURÓ MESES EN EL PROYECTO... PRESS "F" TO PAY RESPECT.
-        while true
-            Indice_Poligono_Receptor = Diccionario_Tiempos_Vuelo_Indice[Tiempo_Vuelo_Minimo]; #Obtenemos el índice del polígono al cual entrará la partícula
-            Centro_Poligono_Contenedor = Voronoi.faces[Indice_Poligono_Contenedor].site; #Coordenadas del centro del obstáculo del polígono contenedor
-            Centro_Poligono_Receptor = Voronoi.faces[Indice_Poligono_Receptor].site; #Coordenadas del centro del obstáculo del polígono receptor
-            Vector_Orientado_Contenedor_Receptor = [Centro_Poligono_Receptor[1] - Centro_Poligono_Contenedor[1], Centro_Poligono_Receptor[2] - Centro_Poligono_Contenedor[2]]; #Vector que va del polígono contenedor al polígono receptor
-
-            if dot(Velocidad_Particula, Vector_Orientado_Contenedor_Receptor) > 0 #Revisamos si la velocidad de la partícula coincide con el supuesto cambio de polígono (Solución al error en las esquinas)
-                Extremos_Entrada = Diccionario_Tiempos_Vuelo_Extremos[Tiempo_Vuelo_Minimo];
-                return Indice_Poligono_Receptor, Tiempo_Vuelo_Minimo, Extremos_Entrada, false
-            else
-                filter!(x->x != Tiempo_Vuelo_Minimo, Arreglo_Tiempos_Vuelo); #Eliminamos el tiempo de vuelo mínimo que genera errores de la lista de tiempos de vuelo
-                Tiempo_Vuelo_Minimo = minimum(Arreglo_Tiempos_Vuelo); #Volvemos a obtener el mínimo del tiempo de vuelo
-            end
-        end
-    else
-        return Indice_Poligono_Contenedor, 0.0, Extremos_Entrada, true
-    end
-end
-
-#Función que dadas las condiciones iniciales de la partícula y un tiempo de vuelo dado, nos regresa la trayectoria de la partícula.
+#Función que dadas las condiciones iniciales de la partícula y un tiempo de vuelo dado, nos regresa la trayectoria de la partícula considerando colisiones con obstáculos.
 #Posicion: Posicion inicial de la partícula.
 #Velocidad: Velocidad inicial de la partícula.
 #Tiempo_Vuelo: Tiempo de vuelo deseado que recorra la partícula.
@@ -185,82 +48,81 @@ end
 #Diccionario_Vertices_Indices: Diccionario "Vertices (X,Y) -> Indices_Voronoi".
 #Diccionario_Vertices_Cuadrado: Diccionario "Vertices (X,Y) -> Booleano" que nos indica si el polígono es un polígono dentro de algún parche cuadrado o no.
 #Lado_Poligono_Bloqueado: Información sobre el lado del polígono por el que la partícula entró.
-function vuelo_Una_Particula_Grafico(Posicion, Velocidad, Tiempo_Vuelo, Indice_Obstaculo_Cercano, Radio_Obstaculo, Voronoi, Diccionario_Vertices_Indices, Diccionario_Vertices_Cuadrado, Lado_Poligono_Bloqueado)
-    #plot(); #VISUALIZATION PURPOSE ONLY
+function vuelo_Una_Particula_Obstaculos(Posicion, Velocidad, Tiempo_Vuelo, Indice_Obstaculo_Cercano, Voronoi, Diccionario_Vertices_Indices, Diccionario_Vertices_Cuadrado, Lado_Poligono_Bloqueado, funcion_Cambio_Celda::Function, funcion_Estado_Tras_Tiempo::Function)
     while Tiempo_Vuelo > 0.0
-        #Guardamos las coordenadas X,Y del obstáculo más cercano a nuestra partícula
-        Posicion_Obstaculo = [Voronoi.faces[Indice_Obstaculo_Cercano].site[1], Voronoi.faces[Indice_Obstaculo_Cercano].site[2]];
-        
-        #=
-        #Línea de código para dibujar los obstáculos en la trayectoria de la partícula
-        x(t) = Posicion_Obstaculo[1] + Obstacle_Radius*cos(t);
-        y(t) = Posicion_Obstaculo[2] + Obstacle_Radius*sin(t);
-        plot!(x, y, 0, 2π, leg=false, color="blue")
-        =#
-        
-        #Obtenemos la posición y la velocidad tras la colisión (incluso si no hay colisión).
-        #Si no hay una colisión, entonces el tiempo de colisión es infinito.
-        #NOTA: Esta parte del algoritmo presupone que, si hay colisión con obstáculo, esta se da con el obstáculo
-        #centrado en el polígono de Voronoi que contiene a la partícula: esto es cierto ÚNICAMENTE PARA RADIOS PEQUEÑOS
-        Posicion_Colision, Velocidad_Colision, Tiempo_Vuelo_Colision = colision_Obstaculo(Posicion, Velocidad, Radio_Obstaculo, Posicion_Obstaculo, colision_Esfera_Dura, velocidad_Esfera_Dura);
-        
-        #Obtengamos el índice del polígono que contendrá a la partícula y el tiempo que le tomará cambiar de polígono
-        Indice_Proximo_Obstaculo, Tiempo_Vuelo_Cambio, Lado_Poligono_Bloqueado_Cambio, Frontier_Polygon = cambio_Poligono(Posicion, Velocidad, Voronoi, Indice_Obstaculo_Cercano, Lado_Poligono_Bloqueado, Diccionario_Vertices_Indices, Diccionario_Vertices_Cuadrado);
-
         #Chequemos si el polígono contenedor de la partícula está en los bordes exteriores del parche cuadrado seguro.
         #Si lo está, no calculamos más, nos salimos de la función para generar otro parche centrado en esta posición
-        if Frontier_Polygon
+        if Diccionario_Vertices_Cuadrado[Voronoi.faces[Indice_Obstaculo_Cercano].site] == false
             return Posicion, Velocidad, Tiempo_Vuelo, Indice_Obstaculo_Cercano, Lado_Poligono_Bloqueado
         end
-        
-        if Tiempo_Vuelo_Colision < Tiempo_Vuelo_Cambio #La partícula colisiona antes de moverse de polígono
-            if (Tiempo_Vuelo - Tiempo_Vuelo_Colision) > 0.0 #Hay tiempo para la colisión completa
-                #Línea que grafica la trayectoria de la partícula desde su última posición hasta que colisiona
-                #plot!([Posicion[1], Posicion_Colision[1]], [Posicion[2], Posicion_Colision[2]], color = "black")
 
-                #Actualizamos las variables
-                Tiempo_Vuelo -= Tiempo_Vuelo_Colision; #Se reduce al tiempo de vuelo restante el tiempo en colisionar
-                Posicion = Posicion_Colision; #La nueva posición de la partícula es la posición de la colisión
-                Velocidad = Velocidad_Colision; #La nueva velocidad de la partícula es la velocidad tras la colisión
+        #Guardamos las coordenadas X,Y del obstáculo más cercano a nuestra partícula
+        Posicion_Obstaculo = [Voronoi.faces[Indice_Obstaculo_Cercano].site[1], Voronoi.faces[Indice_Obstaculo_Cercano].site[2]];
+        Posicion_Inicial_Cambio = copy(Posicion);
+        Velocidad_Inicial_Cambio = copy(Velocidad);
+        Lado_Poligono_Bloqueado_Cambio = copy(Lado_Poligono_Bloqueado);
 
-                #Línea que coloca una marca en la posición de la partícula donde colisionó
-                #scatter!([Posicion[1]],[Posicion[2]], markersize = 0.5)
+        #Generamos las variables que se requieren para "cambio_Poligono" y potencialmente para "funcion_Estado_Tras_Tiempo"
+        Diccionario_Segmento_Indice = Dict(); #Diccionario que relaciona los extremos [[X1,Y1], [X2,Y2]] con el índice del polígono exterior que comparte ese lado
+        Diccionario_Segmentos_Centro_Vecino = Dict(); #Diccionario que relaciona los los extremos [[X1,Y1], [X2,Y2]] con la posición del obstáculo de dicha celda vecina
+        Arreglo_Vertices_Contenedor = []; #Arreglo donde se guardarán las coordenadas [X,Y] de los vértices de la celda contenedora
+
+        #Partimos de un lado del polígono de Voronoi que es de nuestro interés
+        Lado_Poligono_Voronoi = Voronoi.faces[Indice_Obstaculo_Cercano].outerComponent;
+            
+        #Iniciamos el proceso while para recorrer todos los lados del polígono de Voronoi y en cada uno hallar el polígono vecino
+        while true
+            #Encontramos el indice del vecino asociado al lado que estamos considerando
+            Obstaculo_Vecino = Lado_Poligono_Voronoi.twin.incidentFace.site;
+            Indice_Vecino = Diccionario_Vertices_Indices[Lado_Poligono_Voronoi.twin.incidentFace.site];
+
+            #Obtenemos los puntos que conforman el lado del polígono de Voronoi
+            Punto1 = Lado_Poligono_Voronoi.origin.coordinates;
+            Punto2 = Lado_Poligono_Voronoi.next.origin.coordinates;
+
+            push!(Arreglo_Vertices_Contenedor, [Punto1[1], Punto1[2]]);
+            Diccionario_Segmento_Indice[[Punto1[1], Punto1[2]], [Punto2[1], Punto2[2]]] = Indice_Vecino;
+            Diccionario_Segmentos_Centro_Vecino[[Punto1[1], Punto1[2]], [Punto2[1], Punto2[2]]] = Obstaculo_Vecino;
                 
-                #Si hay colisión permitimos que la partícula salga por donde entró
-                Lado_Poligono_Bloqueado = [Inf, Inf];
-            else #Se agota el tiempo de vuelo antes de la colisión completa
-                #Línea que grafica la trayectoria de la partícula desde su última posición hasta que se agota el tiempo de vuelo (sin colisionar)
-                #plot!([Posicion[1], (Posicion + Tiempo_Vuelo*Velocidad)[1]], [Posicion[2], (Posicion + Tiempo_Vuelo*Velocidad)[2]], color = "black")
+            #Recorremos al siguiente lado del polígono
+            Lado_Poligono_Voronoi = Lado_Poligono_Voronoi.next;
 
-                #La posición final de la partícula será la última posición válida más el tiempo restante de vuelo por la última velocidad
-                Posicion = Posicion + Tiempo_Vuelo*Velocidad;
-
-                #Línea que coloca una marca en la posición final de la partícula
-                #scatter!([Posicion[1]],[Posicion[2]], markersize = 0.5)
-                return Posicion, Velocidad, 0.0, Indice_Obstaculo_Cercano, Lado_Poligono_Bloqueado
+            #Checamos si hemos ya concluido de revisar todos los lados del polígono de Voronoi
+            if Lado_Poligono_Voronoi === Voronoi.faces[Indice_Obstaculo_Cercano].outerComponent
+                break
             end
-        else #La partícula se mueve de polígono antes de colisionar con el obstáculo de su polígono contenedor
-            if (Tiempo_Vuelo - Tiempo_Vuelo_Cambio) > 0.0 #Hay tiempo para que la partícula salga del polígono
-                #Línea que grafica la trayectoria de la partícula desde su última posición hasta que sale del polígono contenedor
-                #plot!([Posicion[1], (Posicion + (Tiempo_Vuelo_Cambio)*Velocidad)[1]], [Posicion[2], (Posicion + (Tiempo_Vuelo_Cambio)*Velocidad)[2]], color = "black")
-                Tiempo_Vuelo -= (Tiempo_Vuelo_Cambio); #Actualizamos el tiempo de vuelo restante
-                Posicion = Posicion + (Tiempo_Vuelo_Cambio)*Velocidad; #Avancemos la posición de la partícula al nuevo polígono
-                Indice_Obstaculo_Cercano = Indice_Proximo_Obstaculo; #Actualizamos el índice del polígono contenedor
-                Lado_Poligono_Bloqueado = Lado_Poligono_Bloqueado_Cambio; #El lado del polígono bloqueado cambia
+        end
 
-                #Línea que coloca una marca en la posición donde se da el cambio de polígono contenedor
-                #scatter!([Posicion[1]],[Posicion[2]], markersize = 0.5)
-            else #No hay tiempo de vuelo restante para salir del polígono
-                #Línea que grafica la trayectoria de la partícula desde su última posición hasta que se acaba el tiempo de vuelo
-                #plot!([Posicion[1], (Posicion + Tiempo_Vuelo*Velocidad)[1]], [Posicion[2], (Posicion + Tiempo_Vuelo*Velocidad)[2]], color = "black")
+        #Empleamos la función del usuario para que nos regrese la posición y velocidad de la partícula al salir del polígono contenedor actual, así como el tiempo de vuelo de en salir del polígono
+        #y las coordenadas [[X1, Y1], [X2, Y2]] del segmento por el que sale la partícula
+        Posicion_Cambio_Celda, Velocidad_Cambio_Celda, Tiempo_Vuelo_Cambio, Lado_Poligono_Bloqueado_Cambio = funcion_Cambio_Celda(Posicion_Inicial_Cambio, Velocidad_Inicial_Cambio, Arreglo_Vertices_Contenedor, Lado_Poligono_Bloqueado_Cambio, Posicion_Obstaculo, Diccionario_Segmentos_Centro_Vecino);
 
-                #La posición final de la partícula será la última posición válida más el tiempo restante de vuelo por la última velocidad
-                Posicion = Posicion + Tiempo_Vuelo*Velocidad;
+        #Definimos la variable del índice de centro de Voronoi de la celda receptora
+        Indice_Proximo_Obstaculo = 0;
 
-                #Línea que coloca una marca en la posición final de la partícula
-                #scatter!([Posicion[1]],[Posicion[2]], markersize = 0.5)
-                return Posicion, Velocidad, 0.0, Indice_Obstaculo_Cercano, Lado_Poligono_Bloqueado
+        #Obtengamos el índice de la celda contenedora receptora
+        if Tiempo_Vuelo_Cambio < Inf
+            try
+                Indice_Proximo_Obstaculo = Diccionario_Segmento_Indice[Lado_Poligono_Bloqueado_Cambio[1], Lado_Poligono_Bloqueado_Cambio[2]];
+            catch
+                Indice_Proximo_Obstaculo = Diccionario_Segmento_Indice[Lado_Poligono_Bloqueado_Cambio[2], Lado_Poligono_Bloqueado_Cambio[1]];
             end
+        else
+            #Dependiendo de la trayectoria puede ocurrir que la partícula no colisione con obstáculos ni cambie de polígono, en ese caso la partícula se encuentra en
+            #una trayectoria muerta, por ejemplo una trayectoria circular cerrada, en ese caso el algoritmo debe terminar ahí.
+            Indice_Proximo_Obstaculo = Indice_Obstaculo_Cercano;
+            throw(DeadTrajectory())
+        end
+        
+        if (Tiempo_Vuelo - Tiempo_Vuelo_Cambio) > 0.0 #Hay tiempo para que la partícula salga del polígono
+            Tiempo_Vuelo -= (Tiempo_Vuelo_Cambio); #Actualizamos el tiempo de vuelo restante
+            Posicion = Posicion_Cambio_Celda; #Avancemos la posición de la partícula al nuevo polígono
+            Velocidad = Velocidad_Cambio_Celda; #Actualizamos la velocidad de la partícula a la velocidad que tiene cuando cambia de celda
+            Indice_Obstaculo_Cercano = Indice_Proximo_Obstaculo; #Actualizamos el índice del polígono contenedor
+            Lado_Poligono_Bloqueado = Lado_Poligono_Bloqueado_Cambio; #El lado del polígono bloqueado cambia
+        else #No hay tiempo de vuelo restante para salir del polígono
+            Posicion, Velocidad, Lado_Poligono_Bloqueado = funcion_Estado_Tras_Tiempo(Posicion, Velocidad, Arreglo_Vertices_Contenedor, Lado_Poligono_Bloqueado, Posicion_Obstaculo, Diccionario_Segmentos_Centro_Vecino, Tiempo_Vuelo);
+            return Posicion, Velocidad, 0.0, Indice_Obstaculo_Cercano, Lado_Poligono_Bloqueado
         end
     end
 end
@@ -279,8 +141,11 @@ end
 #Short_Fly_Time: The flying time in which the user desires to divide the long-fly time
 #Obstacle_Radius: The radius of the obstacles centered in the vertices of the quasiperiodic array
 #MSD_Array: An array that have the MSD as a function of the fly time
-function MSD_Varying_Velocities(Patch_Information, Reduction_Factor, Average_Distance_Stripes, Star_Vectors, Alphas_Array, APoint_Initial, Number_Velocities, Number_Flights, Short_Fly_Time, Obstacle_Radius, MSD_Array)
-    SL = Patch_Information[2]; #Size of a half side of the square in which the algorithm generate a random point inside it
+#funcion_Cambio_Celda: Function that calculates the position and velocity of a particle when it leaves the container polygon, as well as the time it requires to
+#leave the polygon and the coordinates of the vertices of the segment where it leaves.
+#funcion_Estado_Tras_Tiempo: Function that calculates the position and velocity of a particle, as well as the vertices of the segment from which the particle enter
+#in the latest move.
+function MSD_Varying_Velocities(Patch_Information, Reduction_Factor, Average_Distance_Stripes, Star_Vectors, Alphas_Array, APoint_Initial, Number_Velocities, Number_Flights, Short_Fly_Time, MSD_Array, funcion_Cambio_Celda::Function, funcion_Estado_Tras_Tiempo::Function)
     Average_Radius = Patch_Information[end]; #The value of the previously calculated "Average Radius"
     Safe_Radius = Reduction_Factor*Average_Radius; #The Safe Radius value
 
@@ -288,8 +153,7 @@ function MSD_Varying_Velocities(Patch_Information, Reduction_Factor, Average_Dis
     X,Y = parche_Cuadrado(Patch_Information,Reduction_Factor,Average_Distance_Stripes,Star_Vectors,Alphas_Array,APoint_Initial);
 
     #STEP 2: Get the structure of the Voronoi's Polygons of the Vertices that conform the Quasiperiodic Array
-    #Obtain the vertices of all the polygons as duples.
-    Sites_Vertices = [(Float64(X[i]), Float64(Y[i])) for i in 1:length(X)];
+    Sites_Vertices = [(Float64(X[i]), Float64(Y[i])) for i in 1:length(X)]; #Obtain the vertices of all the polygons as duples.
     unique!(Sites_Vertices); #Eliminate all the copies of a vertex
 
     #Let's generate a Dictionary with the coordinates of the vertices that lay inside the square cluster.
@@ -320,30 +184,52 @@ function MSD_Varying_Velocities(Patch_Information, Reduction_Factor, Average_Dis
 
     #Get the index of the nearest vertex from the list of candidates
     Nearest_Vertex = vertice_Cercano(Nearest_Vertex_Candidates, APoint);
+
+    Live_Flies = 0; #Contador para el número de buenas trayectorias realizadas (Trayectorias "vivas", es decir, no-cerradas)
     
     #STEP 4: Iterates over the desired number of velocities with the fixed initial position
     for α in 1:Number_Velocities
         println("The algorithm is calculating the particle $(α).")
+        Dead_Trajectory = false; #We suppose that the trajectory won't be a closed one
 
         #STEP 5: Get a Initial Velocity
         θ = 2*π*rand(); #Get a random angle between 0 and 2*pi
-        AVelocity_Initial = [cos(θ), sin(θ)];
-
+        AVelocity_Initial = [cos(θ), sin(θ)]; #Generate a unitary velocity
+        AVelocity = copy(AVelocity_Initial); #A copy of Initial Velocity in order to preserve the original one
         APoint = copy(APoint_Initial); #A copy of Initial Position in order to preserve the original one
 
         #Get the index in the Vertex's Voronoi of the nearest vertex
         Nearest_Vertex_Index_Voronoi = Dictionary_Vertex_Index[Nearest_Vertex];
 
         #At the begin, all the sides of the container polygons are valid
-        Forbidden_Side_Polygon = [Inf, Inf];
+        Forbidden_Side_Polygon = [[Inf, Inf], [Inf, Inf]];
 
         #STEP 6: Let's the particle fly
         for β in 1:Number_Flights
             #Make a little fly
-            APoint,AVelocity_Initial,Remaining_Fly_Time,Nearest_Vertex_Index_Voronoi,Forbidden_Side_Polygon = vuelo_Una_Particula_Grafico(APoint,AVelocity_Initial,Short_Fly_Time,Nearest_Vertex_Index_Voronoi,Obstacle_Radius,Voronoi_Vertices,Dictionary_Vertex_Index,Dictionary_Vertices_Inside_Square,Forbidden_Side_Polygon);
+            Remaining_Fly_Time = Short_Fly_Time;
+
+            try
+                APoint,AVelocity,Remaining_Fly_Time,Nearest_Vertex_Index_Voronoi,Forbidden_Side_Polygon = vuelo_Una_Particula_Obstaculos(APoint,AVelocity,Short_Fly_Time,Nearest_Vertex_Index_Voronoi,Voronoi_Vertices,Dictionary_Vertex_Index,Dictionary_Vertices_Inside_Square,Forbidden_Side_Polygon,funcion_Cambio_Celda,funcion_Estado_Tras_Tiempo);
+            catch Err
+            	if isa(Err, DeadTrajectory)
+            		println("The particle $(α) is a dead one")
+            		println("La posicion inicial es: $(APoint_Initial)")
+            		println("La velocidad inicial es: $(AVelocity_Initial)")
+            		Dead_Trajectory = true;
+            		break
+            	else
+            		println("Check the initial conditions, something went wrong")
+            		println("La posicion inicial es: $(APoint_Initial)")
+            		println("La velocidad inicial es: $(AVelocity_Initial)")
+            		throw(ErrorException())
+            	end
+            end
+
             Nearest_Vertex_End_Patch = Voronoi_Vertices.faces[Nearest_Vertex_Index_Voronoi].site; #X,Y coordinates of the obstacle that correspond to the container polygon
 
-            if Remaining_Fly_Time > 0.0
+            while Remaining_Fly_Time > 0.0
+                println("Estamos generando un parche nuevo")
                 #STEP 7: Generate a new square patch if the previous one wasn't enough
                 X,Y = parche_Cuadrado(Patch_Information,Reduction_Factor,Average_Distance_Stripes,Star_Vectors,Alphas_Array,APoint);
                 push!(Array_Position_Patches, APoint);
@@ -377,14 +263,19 @@ function MSD_Varying_Velocities(Patch_Information, Reduction_Factor, Average_Dis
                 Nearest_Vertex_Index_Voronoi = Dictionary_Vertex_Index[Nearest_Vertex_End_Patch];
 
                 #STEP 9: Re-fly the particle
-                APoint,AVelocity_Initial,Remaining_Fly_Time,Nearest_Vertex_Index_Voronoi,Forbidden_Side_Polygon = vuelo_Una_Particula_Grafico(APoint,AVelocity_Initial,Remaining_Fly_Time,Nearest_Vertex_Index_Voronoi,Obstacle_Radius,Voronoi_Vertices,Dictionary_Vertex_Index,Dictionary_Vertices_Inside_Square,Forbidden_Side_Polygon);
+                APoint,AVelocity,Remaining_Fly_Time,Nearest_Vertex_Index_Voronoi,Forbidden_Side_Polygon = vuelo_Una_Particula_Obstaculos(APoint,AVelocity,Remaining_Fly_Time,Nearest_Vertex_Index_Voronoi,Voronoi_Vertices,Dictionary_Vertex_Index,Dictionary_Vertices_Inside_Square,Forbidden_Side_Polygon,funcion_Cambio_Celda,funcion_Estado_Tras_Tiempo);
                 Nearest_Vertex_End_Patch = Voronoi_Vertices.faces[Nearest_Vertex_Index_Voronoi].site;
             end
 
             #Calculate the MSD of the system
             MSD_Actual = (APoint[1] - APoint_Initial[1])^2 + (APoint[2]- APoint_Initial[2])^2;
-            MSD_Array[β] = (MSD_Array[β]*(α-1) + MSD_Actual)/α;
+            MSD_Array[β] = (MSD_Array[β]*(Live_Flies) + MSD_Actual)/(Live_Flies+1);
+        end
+
+        #If the trajectory is not a dead one, we add this one in the counter of the validate trajectories to calculate the MSD
+        if Dead_Trajectory == false
+            Live_Flies += 1;
         end
     end
-    return MSD_Array
+    return MSD_Array, Live_Flies
 end
