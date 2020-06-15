@@ -32,3 +32,5 @@ A recommended order of lecture (based in how the code was developed) is:
 14.- MSD_Various_Points
 
 15.- Safe_and_Efficient_Obstacle_Radius
+
+16.- Debug_and_Visualization_MSD
