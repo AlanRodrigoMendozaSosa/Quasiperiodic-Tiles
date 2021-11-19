@@ -1,0 +1,1 @@
+Folder with the .csv files corresponding to the free path lengths of a particle in a Quasiperiodic Lorentz gas at the Boltzmann-Grad limit. These data were used to generate the graphs present in the paper "Efficient algorithm for simulating particles in real quasiperiodic environments" available at https://arxiv.org/abs/2111.08128  
