@@ -11,7 +11,7 @@
 ####################################################################################################################################################################################
 
 #Definimos el radio del obstáculo a considerar en este caso particular
-const Radio_Obstaculo = 0.29;
+const Radio_Obstaculo = 0.0005;
 
 ####################################################################################################################################################################################
 ####################################################################################################################################################################################
@@ -193,6 +193,8 @@ function colision_Segmento(Posicion_Inicial, Velocidad_Inicial, Arreglo_Vertices
 
 		if [P1, P2] == Extremos_Entrada || [P2, P1] == Extremos_Entrada #Si es la puerta por donde entró, no la consideramos
 			nothing
+        elseif norm(P1 - P2) < 1e-6 #Si el segmento es muy pequeño, es un segmento falso (errores introducidos al generar el Voronoi)
+            nothing
 		else
 			#Obtenemos el punto de colisión de la partícula con ese segmento y el tiempo de vuelo que le toma
 			Punto_Colision, Tiempo_Vuelo = funcion_Interseccion_Particula_Celda(Posicion_Inicial, Velocidad_Inicial, P1, P2);
@@ -213,6 +215,8 @@ function colision_Segmento(Posicion_Inicial, Velocidad_Inicial, Arreglo_Vertices
 
 	if [P1, P2] == Extremos_Entrada || [P2, P1] == Extremos_Entrada #Si es la puerta por donde entró, no la consideramos
 		nothing
+    elseif norm(P1 - P2) < 1e-6 #Si el segmento es muy pequeño, es un segmento falso (errores introducidos al generar el Voronoi)
+        nothing
 	else
 		#Obtenemos el punto de colisión de la partícula con ese segmento y el tiempo de vuelo que le toma
 		Punto_Colision, Tiempo_Vuelo = funcion_Interseccion_Particula_Celda(Posicion_Inicial, Velocidad_Inicial, P1, P2);
@@ -274,10 +278,10 @@ function cambio_Celda_Esferas_Duras_Trayectoria_Recta(Posicion_Inicial, Velocida
         Posicion_Cambio_Celda, Velocidad_Cambio_Celda, Tiempo_Vuelo_Cambio_Celda, Extremos_Cambio_Celda = colision_Segmento(Posicion_Inicial, Velocidad_Inicial, Arreglo_Vertices_Celda, Coordenadas_Segmento_Entrada, Posicion_Obstaculo, Diccionario_Segmentos_Centro_Vecino, interseccion_Particula_Celda_Trayectorias_Rectas, velocidad_Cambio_Celda_Trayectorias_Rectas);
 
         Tiempo_Acumulado_Vuelo += Tiempo_Vuelo_Cambio_Celda; #Actualizamos el tiempo de vuelo restante
-        return Posicion_Cambio_Celda, Velocidad_Cambio_Celda, Tiempo_Acumulado_Vuelo, Extremos_Cambio_Celda
+        return Posicion_Cambio_Celda, Velocidad_Cambio_Celda, Tiempo_Acumulado_Vuelo, Extremos_Cambio_Celda, Posicion_Colision
     else #La partícula se mueve de polígono antes de colisionar con el obstáculo de su polígono contenedor
         Tiempo_Acumulado_Vuelo += Tiempo_Vuelo_Cambio_Celda; #Actualizamos el tiempo de vuelo restante
-        return Posicion_Cambio_Celda, Velocidad_Cambio_Celda, Tiempo_Acumulado_Vuelo, Extremos_Cambio_Celda 
+        return Posicion_Cambio_Celda, Velocidad_Cambio_Celda, Tiempo_Acumulado_Vuelo, Extremos_Cambio_Celda, [Inf, Inf]
     end
 end
 
@@ -301,14 +305,14 @@ function estado_Tras_Tiempo_Rectas(Posicion_Inicial, Velocidad_Inicial, Arreglo_
             Coordenadas_Segmento_Entrada = [[Inf, Inf], [Inf, Inf]]; #Si hay colisión permitimos que la partícula salga por donde entró
 
            	Posicion_Inicial, Velocidad_Inicial = estado_Tras_Tiempo_Rectas_Parcial(Posicion_Inicial, Velocidad_Inicial, Tiempo_Vuelo_Parcial);
-			return Posicion_Inicial, Velocidad_Inicial, Coordenadas_Segmento_Entrada
+			return Posicion_Inicial, Velocidad_Inicial, Coordenadas_Segmento_Entrada, Posicion_Colision
         else #Se agota el tiempo de vuelo antes de la colisión completa
             Posicion_Inicial, Velocidad_Inicial = estado_Tras_Tiempo_Rectas_Parcial(Posicion_Inicial, Velocidad_Inicial, Tiempo_Vuelo_Parcial);
-			return Posicion_Inicial, Velocidad_Inicial, Coordenadas_Segmento_Entrada
+			return Posicion_Inicial, Velocidad_Inicial, Coordenadas_Segmento_Entrada, [Inf, Inf]
         end
     else #La partícula se mueve de polígono antes de colisionar con el obstáculo de su polígono contenedor
         #No hay tiempo de vuelo restante para salir del polígono
         Posicion_Inicial, Velocidad_Inicial = estado_Tras_Tiempo_Rectas_Parcial(Posicion_Inicial, Velocidad_Inicial, Tiempo_Vuelo_Parcial);
-        return Posicion_Inicial, Velocidad_Inicial, Coordenadas_Segmento_Entrada
+        return Posicion_Inicial, Velocidad_Inicial, Coordenadas_Segmento_Entrada, [Inf, Inf]
     end
 end
