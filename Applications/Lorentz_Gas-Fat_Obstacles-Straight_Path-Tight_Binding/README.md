@@ -1,0 +1,1 @@
+Core files to run a simulation of a point particle traveling in straight lines through a Lorentz gas with obstacles of arbitrary radius. This version considers only a tight binding interaction (only the obstacle located inside the Voronoi cell that contains the particle)
