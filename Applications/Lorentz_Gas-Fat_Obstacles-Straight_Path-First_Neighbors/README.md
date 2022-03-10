@@ -1,1 +1,1 @@
-Inserte
+Core files to run a simulation of a point particle traveling in straight lines through a Lorentz gas with obstacles of arbitrary radius. This version considers a first neighbors interaction (The obstacle located within the Voronoi cell that contains the particle, as well as the obstacles associated with its neighboring cells). The notebook is designed to obtain the distance between the obstacle and the obstacle when the particle collides (Free flights).
