@@ -1,5 +1,7 @@
 In this folder we can find some subfolders with notebooks and the files required by them to run. In those notebooks several examples of what can be done with the programmed algorithms are presented.
 
+These examples have more than anything historical value and are in part documentation and record of the original development of the final algorithm, the versions contained here are not updated to the latest version of the software, although their functionality is ensured with the files contained in each folder 
+
 ### Order of lecture.
 A recommended order of lecture (based in how the code was developed) is:
 
