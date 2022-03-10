@@ -8,7 +8,7 @@ function proyecciones_Pto_Direccion_Franjas(Punto, Promedios_Distancia, Vectores
     
     #Paso 2: Para cada vector estrella, proyectamos el Punto sobre dicho vector y reescalamos con la separación entre las franjas cuasiperiódicas.
     for i in 1:length(Vectores_Estrella)
-        Proyeccion = prod_Punto(Punto, Vectores_Estrella[i])/Promedios_Distancia[i];
+        Proyeccion = prod_Punto(Punto, Vectores_Estrella[i]/norm(Vectores_Estrella[i]))/Promedios_Distancia[i];
         #Al parecer no hay que restarle "- Arreglo_Distancia_Origen_Primera_Recta[i]" que es la DOPR
         push!(Arreglo_Proyeccion_Pto_Direccion_Franjas, Proyeccion);
     end
