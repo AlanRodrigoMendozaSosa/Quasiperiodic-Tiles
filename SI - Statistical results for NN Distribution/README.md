@@ -1,1 +1,3 @@
-H
+Each of the .csv files contained in this folder correspond to the values ​​for the distance to the nearest neighbor of the sites of a quasiperiodic lattice of rotational symmetry N = 1009.
+
+Each file corresponds to a different statistical sampling of said quasiperiodic lattice and the nomenclature of this files is as follows. "Sites" corresponds to the number of sites that were analyzed (for example, "Sites1e4" corresponds to a statistical sample of 10,000 sites) while "SL" corresponds to the size of the square centered on the origin within which an arbitrary site P was taken, around which the circular neighborhood of the quasiperiodic lattice from which the sites are analyzed was built (for example "SL1e6" indicates that the neighborhoods analyzed in this file were generated around arbitrary points P selected within a square of side L = 2x10^ 6 centered on the center of symmetry).
