@@ -1,0 +1,1 @@
+This folder contains the data, and the notebooks related to obtained it, used in the paper "Structural studies of local environments in high-symmetry quasicrystals" ([DOI: https://doi.org/10.1038/s41598-023-42145-7](https://doi.org/10.1038/s41598-023-42145-7)).
