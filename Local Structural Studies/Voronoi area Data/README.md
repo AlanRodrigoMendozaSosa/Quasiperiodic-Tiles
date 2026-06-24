@@ -1,3 +1,3 @@
 Each of the .csv files contained in this folder correspond to the Voronoi areas associated with the Voronoi cells of a set of 1x10^6 sites of the N rotational symmetry quasiperiodic lattice.
 
-These data were used to generate the graphs present in the article "Structural studies of local environments in high-symmetry quasicrystals" available at...
+These data were used to generate the graphs present in the article "Structural studies of local environments in high-symmetry quasicrystals" available at https://doi.org/10.1038/s41598-023-42145-7
