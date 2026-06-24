@@ -1,0 +1,1 @@
+This folder contains the data, and the notebooks related to obtained it, used in the paper "Efficient algorithm for simulating particles in true quasiperiodic environments" (DOI: 10.1088/1751-8121/ac6b68).
