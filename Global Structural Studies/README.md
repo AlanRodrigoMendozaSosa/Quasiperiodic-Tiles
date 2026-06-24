@@ -1,0 +1,1 @@
+This folder contains the data used to generate the figures presented in the paper "The scales of disorder in perfect quasicrystals" () as well as its accompanying Supplementary Information. Additionally, the notebooks containing the code used to produce these figures are provided to facilitate reproducibility.
