@@ -1,1 +1,1 @@
-Folder with the coordinates (X,Y) of the smallest tiles in the classical approximant of a quasiperiodic tile with rotational symmetry N = 11
+Folder with the coordinates (X,Y) of the smallest tiles in the classical approximant of a quasiperiodic tile with rotational symmetry N = 11 around an arbitrary point with coordinates APoint = [710710.3918523701, -517876.9206462959]
