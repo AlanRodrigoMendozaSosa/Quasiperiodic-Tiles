@@ -1,0 +1,1 @@
+This folder contains the data corresponding to the variance in the number of sites inside a circular window as a function of his radius for many quasiperiodic tilings of rotational symmetry N = 5, 11, 31 and 157.
