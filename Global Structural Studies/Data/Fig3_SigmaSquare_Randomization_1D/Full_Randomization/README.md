@@ -1,0 +1,1 @@
+This folder contains the data for the variance in the number of sites for a quasiperiodic tiling created by a random selection of a tile after a tile following the same tile probability distribution as a perfect quasiperiodic tiling of rotational symmetry N = 51
