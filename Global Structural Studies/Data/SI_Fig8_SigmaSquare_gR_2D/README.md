@@ -1,1 +1,0 @@
-This folder contains the data corresponding to the variance in the number of sites inside a circular window as a function of his radius, as well as the data for the g(R) function, for all quasiperiodic tilings of odd rotational symmetry N between 5 and 31.
