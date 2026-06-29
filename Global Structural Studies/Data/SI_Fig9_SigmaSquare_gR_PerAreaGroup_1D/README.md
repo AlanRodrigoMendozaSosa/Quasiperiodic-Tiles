@@ -1,0 +1,1 @@
+This folder contains the data of the variance of the number of sites inside a circular window, as well as the data for the g(R), as a function of his radius for the smallest tile, second smallest tile, and so on corresponding to a quasiperiodic tiling of rotational symmetry N = 27. The decoration employed in this case is one point at the centroid of each tile.
